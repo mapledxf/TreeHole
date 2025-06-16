@@ -130,7 +130,7 @@ class UserActivity : AppCompatActivity() {
                         val faceImage =
                             FaceManager.getInstance().cropFaceBitmap(bitmap, faceBox.second)
                         ivHead.setImageBitmap(faceImage)
-                        editText.setHint("User Name")
+                        editText.hint = "User Name"
                         val confirmUpdateDialog: AlertDialog = AlertDialog.Builder(this)
                             .setView(inputView)
                             .setPositiveButton(

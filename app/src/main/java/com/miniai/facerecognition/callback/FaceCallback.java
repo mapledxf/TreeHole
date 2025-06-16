@@ -1,11 +1,13 @@
 package com.miniai.facerecognition.callback;
 
 public interface FaceCallback {
-    void OnFaceRecognized(String userName);
+    void OnSessionStart(String userName);
 
-    void OnFaceUnknown();
+    void OnSessionResume(String userName);
 
     void OnFaceDisappear();
+
+    void OnSessionEnd();
 
     void OnError(int errorCode);
 

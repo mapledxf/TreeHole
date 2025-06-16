@@ -9,6 +9,7 @@ public class UserInfo {
     public static final int MULTI_FACE = -2;
     public static final int FAKE = -3;
     public static final int UNKNOWN = -4;
+    public static final String DEFAULT_NAME = "Unknown";
 
     public String userName;
     public Bitmap faceImage;

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Handler;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
@@ -44,15 +43,15 @@ public class FaceManager {
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private UserDB userDB;
 
-    enum STATE{
+    enum STATE {
         QUITING, IDLE, WAITING, WORKING, ANONYMOUS
     }
 
     private STATE state = STATE.IDLE;
 
-    private String userName = "";
+    private UserInfo currentUser = null;
 
-    private Handler handler = new Handler();
+    private final Handler handler = new Handler();
 
     private static final class Holder {
         private static final FaceManager INSTANCE = new FaceManager();
@@ -122,101 +121,8 @@ public class FaceManager {
                         @SuppressLint("UnsafeOptInUsageError")
                         Bitmap frameBitmap = BitmapUtils.imageToBitmap(Objects.requireNonNull(image.getImage()), image.getImageInfo().getRotationDegrees());
                         Pair<Integer, UserInfo> result = detectFace(frameBitmap);
+                        changeState(result, callback);
 
-                        switch (result.first) {
-                            case UserInfo.NO_FACE:
-                                if (state == STATE.WAITING) {
-                                    state = STATE.QUITING;
-                                    handler.removeCallbacksAndMessages(null);
-                                    handler.postDelayed(() -> {
-                                        state = STATE.IDLE;
-                                        callback.OnFaceDisappear();
-                                    }, 3000);
-                                } else if (state == STATE.ANONYMOUS) {
-                                    state = STATE.QUITING;
-                                    handler.removeCallbacksAndMessages(null);
-                                    handler.postDelayed(() -> {
-                                        state = STATE.IDLE;
-                                        callback.OnFaceDisappear();
-                                    }, 3000);
-                                } else if (state == STATE.QUITING) {
-
-                                } else if (state == STATE.WORKING) {
-                                    state = STATE.QUITING;
-                                    handler.removeCallbacksAndMessages(null);
-                                    handler.postDelayed(() -> {
-                                        state = STATE.IDLE;
-                                        callback.OnFaceDisappear();
-                                    }, 3000);
-                                } else if (state == STATE.IDLE) {
-                                    state = STATE.QUITING;
-                                    handler.removeCallbacksAndMessages(null);
-                                    handler.postDelayed(() -> {
-                                        state = STATE.IDLE;
-                                        callback.OnFaceDisappear();
-                                    }, 3000);
-                                }
-                                break;
-                            case UserInfo.UNKNOWN:
-                                if (state == STATE.WAITING) {
-
-                                } else if (state == STATE.ANONYMOUS) {
-
-                                } else if (state == STATE.QUITING) {
-                                    handler.removeCallbacksAndMessages(null);
-                                    if (TextUtils.isEmpty(userName)) {
-                                        state = STATE.ANONYMOUS;
-                                    } else {
-                                        state = STATE.WORKING;
-                                    }
-                                } else if (state == STATE.WORKING) {
-
-                                } else if (state == STATE.IDLE) {
-                                    state = STATE.WAITING;
-                                    handler.removeCallbacksAndMessages(null);
-                                    handler.postDelayed(() -> {
-                                        state = STATE.ANONYMOUS;
-                                        callback.OnFaceUnknown();
-                                    }, 1000);
-                                }
-                                break;
-                            case UserInfo.SUCCESS:
-                                if (state == STATE.WAITING) {
-                                    handler.removeCallbacksAndMessages(null);
-                                    state = STATE.WORKING;
-                                    callback.OnFaceRecognized(result.second.userName);
-                                } else if (state == STATE.ANONYMOUS) {
-
-                                } else if (state == STATE.QUITING) {
-                                    handler.removeCallbacksAndMessages(null);
-                                    if (TextUtils.isEmpty(userName)) {
-                                        state = STATE.ANONYMOUS;
-                                    } else {
-                                        state = STATE.WORKING;
-                                    }
-                                } else if (state == STATE.WORKING) {
-
-                                } else if (state == STATE.IDLE) {
-                                    handler.removeCallbacksAndMessages(null);
-                                    state = STATE.WORKING;
-                                    userName = result.second.userName;
-                                    callback.OnFaceRecognized(userName);
-                                }
-                                break;
-                            case UserInfo.FAKE:
-//                                if (state != STATE.ERROR) {
-//                                    state = STATE.ERROR;
-//                                    callback.OnError(UserInfo.FAKE);
-//                                }
-                                break;
-                            case UserInfo.MULTI_FACE:
-//                                if (state != STATE.ERROR) {
-//                                    state = STATE.ERROR;
-//                                    callback.OnError(UserInfo.MULTI_FACE);
-//                                }
-                                break;
-
-                        }
                     }
                     image.close();
                 });
@@ -236,6 +142,151 @@ public class FaceManager {
                 Log.e(TAG, "run: ", e);
             }
         }, ContextCompat.getMainExecutor(App.getInstance()));
+    }
+
+    private void changeState(Pair<Integer, UserInfo> result, FaceCallback callback) {
+        switch (result.first) {
+            //未检测到人脸
+            case UserInfo.NO_FACE:
+                // 未检测到人脸情况，之前是
+                // 1. 检测到人脸，等待注册人脸结果
+                // 2. 检测到人脸，但未找到注册信息。
+                // 3. 检测到人脸，已找到注册结果。
+                // 设置当前状态为退出中，等待5秒，如果还是没有识别到人脸，则发送结束事件。
+                if (state == STATE.WAITING
+                        || state == STATE.ANONYMOUS
+                        || state == STATE.WORKING
+                ) {
+                    Log.d(TAG, "from " + state + " to " + STATE.QUITING);
+                    callback.OnFaceDisappear();
+                    state = STATE.QUITING;
+                    handler.removeCallbacksAndMessages(null);
+                    handler.postDelayed(() -> {
+                        currentUser = null;
+                        Log.d(TAG, "from " + state + " to " + STATE.IDLE);
+                        state = STATE.IDLE;
+                        callback.OnSessionEnd();
+                    }, 5000);
+//                                } else if (state == STATE.QUITING) {
+                }
+                break;
+            case UserInfo.UNKNOWN:
+                // 检测到人脸，但是没有找到注册信息
+                if (state == STATE.QUITING) {
+                    // 检测到人脸，但是没有找到注册信息，如果当前是退出阶段，等待还未超时，
+                    if (currentUser == null) {
+                        // 检测到人脸，但是没有找到注册信息，如果当前是退出阶段，等待还未超时，
+                        // 如果之前没有任何人脸信息，则等待2秒内是否有注册信息返回，超时则认为是匿名用户。
+                        Log.d(TAG, "from " + state + " to " + STATE.WAITING + " previous is null");
+                        state = STATE.WAITING;
+                        handler.removeCallbacksAndMessages(null);
+                        handler.postDelayed(() -> {
+                            Log.d(TAG, "from " + state + " to " + STATE.ANONYMOUS);
+                            state = STATE.ANONYMOUS;
+                            currentUser = result.second;
+                            callback.OnSessionStart(currentUser.userName);
+                        }, 2000);
+                    } else if (currentUser.userId == -1) {
+                        // 检测到人脸，但是没有找到注册信息，如果当前是退出阶段，等待还未超时，
+                        // 如果之前是匿名用户，则判断是否为同一人，如果是则继续session，不是则继续等待超时。
+                        if (getSimilarity(currentUser.featData, result.second.featData) > RECOGNIZE_THRESHOLD) {
+                            handler.removeCallbacksAndMessages(null);
+                            Log.d(TAG, "from " + state + " to " + STATE.ANONYMOUS + " previous is unknown");
+                            state = STATE.ANONYMOUS;
+                            callback.OnSessionResume(currentUser.userName);
+                        }
+                    } else if (currentUser.userName.equals(result.second.userName)) {
+                        // 检测到人脸，但是没有找到注册信息，如果当前是退出阶段，等待还未超时，
+                        // 如果之前是注册用户，则判断是否是同一个用户，是则继续session，不是则继续等待超时。
+                        handler.removeCallbacksAndMessages(null);
+                        Log.d(TAG, "from " + state + " to " + STATE.WORKING + " previous is " + currentUser.userName);
+                        state = STATE.WORKING;
+                        callback.OnSessionResume(currentUser.userName);
+                    }
+                } else if (state == STATE.IDLE) {
+                    // 检测到人脸，但是没有找到注册信息
+                    // 如果当前是待机状态，则等待注册信息2秒，超时则认为是匿名用户
+                    Log.d(TAG, "from " + state + " to " + STATE.WAITING);
+                    state = STATE.WAITING;
+                    handler.removeCallbacksAndMessages(null);
+                    handler.postDelayed(() -> {
+                        Log.d(TAG, "from " + state + " to " + STATE.ANONYMOUS);
+                        state = STATE.ANONYMOUS;
+                        currentUser = result.second;
+                        callback.OnSessionStart(currentUser.userName);
+                    }, 2000);
+//                                } else if (state == STATE.WORKING) {
+//                                } else if (state == STATE.WAITING) {
+//                                } else if (state == STATE.ANONYMOUS) {
+                }
+                break;
+            case UserInfo.SUCCESS:
+                // 检测到人脸，找到注册信息
+                if (state == STATE.WAITING) {
+                    // 检测到人脸，找到注册信息
+                    // 如果之前是在等待注册信息，则直接变为注册状态。
+                    handler.removeCallbacksAndMessages(null);
+                    Log.d(TAG, "from " + state + " to " + STATE.WORKING);
+                    state = STATE.WORKING;
+                    callback.OnSessionStart(result.second.userName);
+                } else if (state == STATE.QUITING) {
+                    // 检测到人脸，找到注册信息
+                    // 如果之前是在等待退出
+                    if (currentUser == null) {
+                        // 检测到人脸，找到注册信息
+                        // 如果之前是在等待退出
+                        // 如果之前没有人脸信息，则直接变为注册状态。
+                        handler.removeCallbacksAndMessages(null);
+                        Log.d(TAG, "from " + state + " to " + STATE.WORKING);
+                        state = STATE.WORKING;
+                        currentUser = result.second;
+                        callback.OnSessionStart(currentUser.userName);
+                    } else if (currentUser.userId == -1) {
+                        // 检测到人脸，找到注册信息
+                        // 如果之前是在等待退出
+                        // 如果之前是匿名，则判断是否为同一人，是则继续，不是则继续等待超时
+                        if (getSimilarity(currentUser.featData, result.second.featData) > RECOGNIZE_THRESHOLD) {
+                            handler.removeCallbacksAndMessages(null);
+                            Log.d(TAG, "from " + state + " to " + STATE.WORKING + " previous is unknow or null");
+                            state = STATE.WORKING;
+                            callback.OnSessionResume(currentUser.userName);
+                        }
+                    } else if(currentUser.userName.equals(result.second.userName)){
+                        // 检测到人脸，找到注册信息
+                        // 如果之前是在等待退出，
+                        // 如果之前是注册用户，则判断是否是同一个用户，是则继续session，不是则继续等待超时。
+                        handler.removeCallbacksAndMessages(null);
+                        Log.d(TAG, "from " + state + " to " + STATE.WORKING + " previous is " + currentUser.userName);
+                        state = STATE.WORKING;
+                        callback.OnSessionResume(currentUser.userName);
+                    }
+                } else if (state == STATE.IDLE) {
+                    // 检测到人脸，找到注册信息
+                    // 如果之前是在待机，
+                    // 直接变为注册用户状态
+                    handler.removeCallbacksAndMessages(null);
+                    Log.d(TAG, "from " + state + " to " + STATE.WORKING);
+                    state = STATE.WORKING;
+                    currentUser = result.second;
+                    callback.OnSessionStart(currentUser.userName);
+//                                } else if (state == STATE.ANONYMOUS) {
+//                                } else if (state == STATE.WORKING) {
+                }
+                break;
+            case UserInfo.FAKE:
+//                                if (state != STATE.ERROR) {
+//                                    state = STATE.ERROR;
+//                                    callback.OnError(UserInfo.FAKE);
+//                                }
+                break;
+            case UserInfo.MULTI_FACE:
+//                                if (state != STATE.ERROR) {
+//                                    state = STATE.ERROR;
+//                                    callback.OnError(UserInfo.MULTI_FACE);
+//                                }
+                break;
+
+        }
     }
 
     public Bitmap cropFaceBitmap(Bitmap frameBitmap, FaceBox faceBox) {
@@ -277,7 +328,7 @@ public class FaceManager {
     public boolean insertUser(String name, Bitmap faceBitmap, Bitmap frameBitmap, FaceBox faceBox) {
         byte[] featData = FaceSDK.getInstance().extractFeature(frameBitmap, faceBox);
         Pair<Integer, UserInfo> userinfo = FaceManager.getInstance().searchFace(featData);
-        if( userinfo.first == UserInfo.SUCCESS){
+        if (userinfo.first == UserInfo.SUCCESS) {
             return false;
         } else {
             insertUser(name, faceBitmap, featData);
@@ -286,20 +337,20 @@ public class FaceManager {
     }
 
     public Pair<Integer, UserInfo> searchFace(byte[] feature) {
-        UserInfo userInfo = new UserInfo();
+        UserInfo userInfo = null;
         float maxScore = 0.0f;
         for (UserInfo user : UserDB.userInfos) {
-            float score = FaceSDK.getInstance().compareFeature(user.featData, feature);
+            float score = getSimilarity(user.featData, feature);
             if (maxScore < score) {
                 maxScore = score;
                 userInfo = user;
             }
         }
-        if (maxScore > RECOGNIZE_THRESHOLD) {
+        if (userInfo != null && maxScore > RECOGNIZE_THRESHOLD) {
             userInfo.score = maxScore;
             return new Pair<>(UserInfo.SUCCESS, userInfo);
         } else {
-            return new Pair<>(UserInfo.UNKNOWN, null);
+            return new Pair<>(UserInfo.UNKNOWN, new UserInfo(-1, UserInfo.DEFAULT_NAME, null, feature));
         }
     }
 
@@ -310,6 +361,10 @@ public class FaceManager {
         } catch (Exception e) {
             Log.e(TAG, "stop: ", e);
         }
+    }
+
+    public float getSimilarity(byte[] first, byte[] second) {
+        return FaceSDK.getInstance().compareFeature(first, second);
     }
 
     public void deleteUser(String userName) {

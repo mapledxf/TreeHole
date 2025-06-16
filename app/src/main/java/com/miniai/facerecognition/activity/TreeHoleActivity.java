@@ -10,11 +10,13 @@ import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 
 import android.util.Log;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.miniai.facerecognition.R;
 import com.miniai.facerecognition.UserActivity;
+import com.miniai.facerecognition.UserInfo;
 import com.miniai.facerecognition.callback.FaceCallback;
 import com.miniai.facerecognition.manager.FaceManager;
 
@@ -23,7 +25,8 @@ import com.miniai.facerecognition.manager.FaceManager;
 public class TreeHoleActivity extends AppCompatActivity implements FaceCallback {
     private static final String TAG = "TreeHoleActivity";
 
-    PreviewView previewView;
+    private PreviewView previewView;
+    private View status;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +39,8 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback 
             Intent intent = new Intent(this, UserActivity.class);
             startActivity(intent);
         });
+
+        status = findViewById(R.id.status);
     }
 
     @Override
@@ -65,18 +70,40 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback 
     }
 
     @Override
-    public void OnFaceRecognized(String userName) {
-        runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this,"Hello " + userName, Toast.LENGTH_SHORT).show());
+    public void OnSessionStart(String userName) {
+        runOnUiThread(() -> {
+            updateStatus(userName);
+            Toast.makeText(TreeHoleActivity.this, "Hello " + userName, Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void updateStatus(String userName) {
+        if (UserInfo.DEFAULT_NAME.equals(userName)) {
+            status.setBackgroundResource(android.R.color.holo_blue_dark);
+        } else {
+            status.setBackgroundResource(android.R.color.holo_green_dark);
+        }
     }
 
     @Override
-    public void OnFaceUnknown() {
-        runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this,"Hello ", Toast.LENGTH_SHORT).show());
+    public void OnSessionResume(String userName) {
+        runOnUiThread(() -> updateStatus(userName));
     }
 
     @Override
     public void OnFaceDisappear() {
-        runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this,"Bye ", Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> {
+            status.setBackgroundResource(android.R.color.holo_orange_dark);
+            Toast.makeText(TreeHoleActivity.this, "Please show your face ", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    @Override
+    public void OnSessionEnd() {
+        runOnUiThread(() -> {
+            status.setBackgroundResource(android.R.color.holo_red_dark);
+            Toast.makeText(TreeHoleActivity.this, "Bye ", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override
