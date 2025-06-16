@@ -122,7 +122,6 @@ public class FaceManager {
                         Bitmap frameBitmap = BitmapUtils.imageToBitmap(Objects.requireNonNull(image.getImage()), image.getImageInfo().getRotationDegrees());
                         Pair<Integer, UserInfo> result = detectFace(frameBitmap);
                         changeState(result, callback);
-
                     }
                     image.close();
                 });
@@ -251,7 +250,7 @@ public class FaceManager {
                             state = STATE.WORKING;
                             callback.OnSessionResume(currentUser.userName);
                         }
-                    } else if(currentUser.userName.equals(result.second.userName)){
+                    } else if (currentUser.userName.equals(result.second.userName)) {
                         // 检测到人脸，找到注册信息
                         // 如果之前是在等待退出，
                         // 如果之前是注册用户，则判断是否是同一个用户，是则继续session，不是则继续等待超时。
@@ -319,10 +318,13 @@ public class FaceManager {
         Pair<Integer, FaceBox> faceBox = getFaceBox(frameBitmap);
         if (faceBox.first != UserInfo.SUCCESS) {
             return new Pair<>(faceBox.first, null);
+        } else if (state == STATE.WORKING || state == STATE.ANONYMOUS) {
+            // 不需要进行人脸识别
+            return new Pair<>(faceBox.first, null);
+        } else {
+            byte[] feature = FaceSDK.getInstance().extractFeature(frameBitmap, faceBox.second);
+            return searchFace(feature);
         }
-
-        byte[] feature = FaceSDK.getInstance().extractFeature(frameBitmap, faceBox.second);
-        return searchFace(feature);
     }
 
     public boolean insertUser(String name, Bitmap faceBitmap, Bitmap frameBitmap, FaceBox faceBox) {

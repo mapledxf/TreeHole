@@ -20,8 +20,6 @@ import com.miniai.facerecognition.UserInfo;
 import com.miniai.facerecognition.callback.FaceCallback;
 import com.miniai.facerecognition.manager.FaceManager;
 
-
-
 public class TreeHoleActivity extends AppCompatActivity implements FaceCallback {
     private static final String TAG = "TreeHoleActivity";
 
@@ -108,6 +106,6 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback 
 
     @Override
     public void OnError(int errorCode) {
-        runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this,"Error " + errorCode, Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this, "Error " + errorCode, Toast.LENGTH_SHORT).show());
     }
 }
