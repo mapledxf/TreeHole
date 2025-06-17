@@ -3,6 +3,7 @@ package com.miniai.facerecognition;
 import android.app.Application;
 import android.util.Log;
 
+import com.miniai.facerecognition.manager.AsrManager;
 import com.miniai.facerecognition.manager.FaceManager;
 
 public class App extends Application {
@@ -22,7 +23,7 @@ public class App extends Application {
     }
 
     public void init() {
-        if (FaceManager.getInstance().init()) {
+        if (FaceManager.getInstance().init() && AsrManager.getInstance().init()) {
             Log.d(TAG, "init success");
         }
     }

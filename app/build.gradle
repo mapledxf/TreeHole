@@ -40,6 +40,9 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
+    buildFeatures {
+        aidl(true)
+    }
 }
 
 dependencies {

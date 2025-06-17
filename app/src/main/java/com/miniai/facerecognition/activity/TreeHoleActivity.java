@@ -18,6 +18,7 @@ import com.miniai.facerecognition.R;
 import com.miniai.facerecognition.UserActivity;
 import com.miniai.facerecognition.UserInfo;
 import com.miniai.facerecognition.callback.FaceCallback;
+import com.miniai.facerecognition.manager.AsrManager;
 import com.miniai.facerecognition.manager.FaceManager;
 
 public class TreeHoleActivity extends AppCompatActivity implements FaceCallback {
