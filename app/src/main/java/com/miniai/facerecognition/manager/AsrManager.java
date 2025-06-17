@@ -15,15 +15,11 @@ import com.miniai.facerecognition.App;
 
 public class AsrManager {
     private static final String TAG = "[TreeHole]AsrManager";
-    private static final String SERVICE_ACTION = "com.k2fsa.sherpa.ncnn.RECOGNITION_SERVICE_ACTION";
-    private static final String SERVICE_PACKAGE_NAME = "com.k2fsa.sherpa.ncnn";
-
     private IAsrService sherpaNcnnService;
     private final IRecognitionCallback.Stub clientCallback = new IRecognitionCallback.Stub() {
         @Override
         public void onResult(String result) {
             Log.d(TAG, "Final Result: " + result);
-
         }
 
         @Override

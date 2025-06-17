@@ -73,6 +73,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback 
         runOnUiThread(() -> {
             updateStatus(userName);
             Toast.makeText(TreeHoleActivity.this, "Hello " + userName, Toast.LENGTH_SHORT).show();
+            AsrManager.getInstance().start();
         });
     }
 
@@ -102,6 +103,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback 
         runOnUiThread(() -> {
             status.setBackgroundResource(android.R.color.holo_red_dark);
             Toast.makeText(TreeHoleActivity.this, "Bye ", Toast.LENGTH_SHORT).show();
+            AsrManager.getInstance().stop();
         });
     }
 
