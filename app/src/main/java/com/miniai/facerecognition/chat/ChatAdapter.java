@@ -1,6 +1,6 @@
 package com.miniai.facerecognition.chat;
 
-import android.os.Handler;
+import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,16 +9,19 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.miniai.facerecognition.App;
 import com.miniai.facerecognition.R;
 
 import java.util.List;
 
+import io.noties.markwon.Markwon;
+
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final List<ChatMessage> messages;
-    private final Handler handler = new Handler();
-
+    private final Markwon markdown;
     public ChatAdapter(List<ChatMessage> messages) {
         this.messages = messages;
+        markdown = Markwon.builder(App.getInstance()).build();
     }
 
     @Override
@@ -46,7 +49,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder.getItemViewType() == ChatMessage.TYPE_USER) {
             ((UserMessageViewHolder) holder).bind(message);
         } else {
-            ((DeepSeekMessageViewHolder) holder).bind(message);
+            Spanned markdown = this.markdown.toMarkdown(message.getContent().toString());
+            ((DeepSeekMessageViewHolder) holder).bind(markdown);
         }
     }
 
@@ -89,8 +93,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             messageText = itemView.findViewById(R.id.deepseek_message_text);
         }
 
-        public void bind(ChatMessage message) {
-            messageText.setText(message.getContent());
+        public void bind(Spanned message) {
+            messageText.setText(message);
         }
     }
 }

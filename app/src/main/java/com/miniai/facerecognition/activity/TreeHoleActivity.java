@@ -42,7 +42,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         previewView.setOnClickListener(v -> {
 //            Intent intent = new Intent(this, UserActivity.class);
 //            startActivity(intent);
-            onResult("给我讲一个笑话");
+            onResult("给我讲一个笑话");  //测试deepseek
         });
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
         ChatManager.getInstance().init(this, chatRecyclerView, this);
@@ -114,6 +114,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
             status.setBackgroundResource(android.R.color.holo_red_dark);
             Toast.makeText(TreeHoleActivity.this, "Bye ", Toast.LENGTH_SHORT).show();
             AsrManager.getInstance().stopAsr();
+            ChatManager.getInstance().reset();
         });
     }
 

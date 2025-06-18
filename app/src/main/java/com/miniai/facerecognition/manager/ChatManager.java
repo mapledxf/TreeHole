@@ -1,5 +1,6 @@
 package com.miniai.facerecognition.manager;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;
@@ -36,6 +37,8 @@ import okhttp3.ResponseBody;
 
 public class ChatManager {
     private static final String TAG = "[TreeHole]ChatManager";
+
+    private static final String SYSTEM_PROMPT = "你是一个乐于助人的AI助手";
     OkHttpClient client = new OkHttpClient();
     private final Gson gson = new Gson();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -77,6 +80,7 @@ public class ChatManager {
         Log.d(TAG, "addUserMessage: " + message);
         chatAdapter.addMessage(new ChatMessage(ChatMessage.TYPE_USER, message));
         chatAdapter.addMessage(new ChatMessage(ChatMessage.TYPE_DEEPSEEK, ""));
+        recyclerView.scrollToPosition(messages.size() - 1);
         try {
             requestDeepSeek();
         } catch (JSONException e) {
@@ -118,8 +122,10 @@ public class ChatManager {
                         if (line.startsWith("data: ")) {
                             String jsonData = line.substring(6);
                             if (jsonData.trim().equals("[DONE]")) {
+                                Log.d(TAG, "onResponse: " + messages.get(messages.size()-1).getContent());
                                 if (callback != null) {
                                     callback.onChatEnd();
+                                    mainHandler.post(() -> recyclerView.scrollToPosition(messages.size() - 1));
                                 }
                                 break;
                             }
@@ -155,6 +161,10 @@ public class ChatManager {
         jsonBodyObject.put("stream", true);
 
         JSONArray messagesArray = new JSONArray();
+        JSONObject systemPrompt = new JSONObject();
+        systemPrompt.put("role", "system");
+        systemPrompt.put("content", SYSTEM_PROMPT);
+        messagesArray.put(systemPrompt);
         for (ChatMessage msg : messages) {
             JSONObject messageJson = new JSONObject();
             messageJson.put("role", msg.getType() == ChatMessage.TYPE_USER ? "user" : "assistant");
@@ -170,6 +180,12 @@ public class ChatManager {
             chatAdapter.appendAIMessage(message);
             recyclerView.scrollToPosition(messages.size() - 1);
         });
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void reset() {
+        messages.clear();
+        chatAdapter.notifyDataSetChanged();
     }
 
 }
