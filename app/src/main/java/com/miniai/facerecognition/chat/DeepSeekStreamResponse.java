@@ -2,7 +2,7 @@ package com.miniai.facerecognition.chat;
 
 import java.util.List;
 
-public class DeepSeekResponse {
+public class DeepSeekStreamResponse {
     private String id;
     private String object;
     private long created;
@@ -50,16 +50,16 @@ public class DeepSeekResponse {
     }
 
     public static class Choice {
-        private Message message;
+        private Delta delta;
         private int index;
         private Object finish_reason;
 
-        public Message getMessage() {
-            return message;
+        public Delta getDelta() {
+            return delta;
         }
 
-        public void setMessage(Message message) {
-            this.message = message;
+        public void setDelta(Delta delta) {
+            this.delta = delta;
         }
 
         public int getIndex() {
@@ -79,7 +79,7 @@ public class DeepSeekResponse {
         }
     }
 
-    public static class Message {
+    public static class Delta {
         private String role;
         private String content;
 

@@ -39,8 +39,6 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     private View faceStatus;
     private View asrStatus;
 
-    private View pushToTalk;
-
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,11 +50,11 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         previewView.setOnClickListener(v -> {
             Intent intent = new Intent(this, UserActivity.class);
             startActivity(intent);
-//            onResult("我的老师打我");  //测试deepseek
+//            onAsrFinalResult("我的老师打我");  //测试deepseek
         });
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
 
-        pushToTalk = findViewById(R.id.p2t);
+        View pushToTalk = findViewById(R.id.p2t);
         pushToTalk.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -142,8 +140,9 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void OnFaceSessionEnd() {
+    public void OnFaceSessionEnd(String userName) {
         runOnUiThread(() -> {
+            ReportManager.getInstance().report(userName, ChatManager.getInstance().getMessages());
             faceStatus.setBackgroundResource(android.R.color.holo_red_dark);
             Toast.makeText(TreeHoleActivity.this, "Bye ", Toast.LENGTH_SHORT).show();
             AsrManager.getInstance().stopAsr();
@@ -198,13 +197,8 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void OnChatEnd(String label, String reason, List<ChatMessage> messages) {
-        if (!"无".equals(label)) {
-            runOnUiThread(() -> {
-                Toast.makeText(TreeHoleActivity.this, label + " \n" + reason, Toast.LENGTH_LONG).show();
-                ReportManager.getInstance().report(FaceManager.getInstance().getUserName(), label, reason, messages);
-            });
-        }
+    public void OnChatEnd(List<ChatMessage> messages) {
+        Log.d(TAG, "OnChatEnd: ");
     }
 
     @Override

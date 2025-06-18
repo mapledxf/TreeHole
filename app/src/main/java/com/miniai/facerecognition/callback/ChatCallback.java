@@ -9,5 +9,5 @@ public interface ChatCallback {
 
     void onChatError(String message);
 
-    void OnChatEnd(String label, String reason, List<ChatMessage> messages);
+    void OnChatEnd(List<ChatMessage> messages);
 }

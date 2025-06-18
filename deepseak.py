@@ -51,7 +51,7 @@ class DeepSeekChat:
                             try:
                                 chunk = json.loads(data)
                                 if "choices" in chunk and chunk["choices"]:
-                                    content = chunk["choices"][0]["delta"].get("content", "")
+                                    content = chunk["choices"][0]["message"].get("content", "")
                                     if content:
                                         print(content, end="", flush=True)
                                         full_response += content
@@ -74,7 +74,7 @@ class DeepSeekChat:
 if __name__ == "__main__":
     API_KEY = "sk-b6e4dfe5aa9c475f8209c1c9c02d5cf0"
     prompt = ""
-    with open("./app/src/main/assets/prompt.txt", 'r', encoding='utf-8') as file:
+    with open("./app/src/main/assets/evaluation_prompt.txt", 'r', encoding='utf-8') as file:
         prompt = file.read().strip()
     chat = DeepSeekChat(api_key=API_KEY, initial_prompt=prompt)
 

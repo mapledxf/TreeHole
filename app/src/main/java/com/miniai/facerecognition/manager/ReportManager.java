@@ -1,6 +1,7 @@
 package com.miniai.facerecognition.manager;
 
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 
@@ -10,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import okhttp3.Call;
@@ -48,7 +50,7 @@ public class ReportManager {
         return true;
     }
 
-    public void report(String userName, String label, String reason, List<ChatMessage> messages) {
+    public void report(String userName, List<ChatMessage> messages) {
         try {
             JSONArray messagesArray = new JSONArray();
             for (ChatMessage msg : messages) {
@@ -58,36 +60,44 @@ public class ReportManager {
                 messagesArray.put(messageJson);
             }
 
-            JSONObject json = new JSONObject();
-            json.put("time", System.currentTimeMillis() / 1000);
-            json.put("username", userName);
-            json.put("label", label);
-            json.put("reason", reason);
-            json.put("history", messagesArray);
+            new Thread(() -> {
+                try {
+                    Pair<String,String> evaluation = ChatManager.getInstance().evaluate(messagesArray.toString());
 
-            Log.d(TAG, "report: " + json);
-            RequestBody body = RequestBody.create(
-                    json.toString(), MediaType.parse("application/json; charset=utf-8"));
+                    JSONObject json = new JSONObject();
+                    json.put("time", System.currentTimeMillis() / 1000);
+                    json.put("username", userName);
+                    json.put("label", evaluation.first);
+                    json.put("reason", evaluation.second);
+                    json.put("history", messagesArray);
 
-            Request request = new Request.Builder()
-                    .url(URL)
-                    .post(body)
-                    .build();
+                    Log.d(TAG, "report: " + json);
+                    RequestBody body = RequestBody.create(
+                            json.toString(), MediaType.parse("application/json; charset=utf-8"));
 
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    Log.e(TAG, "onFailure: ", e);
-                    // 处理失败
+                    Request request = new Request.Builder()
+                            .url(URL)
+                            .post(body)
+                            .build();
+
+                    client.newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                            Log.e(TAG, "onFailure: ", e);
+                            // 处理失败
+                        }
+
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                            // 处理响应
+                            String resp = response.body().string();
+                            Log.d(TAG, "onResponse: " + resp);
+                        }
+                    });
+                } catch (Exception e) {
+                    Log.e(TAG, "report: ", e);
                 }
-
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    // 处理响应
-                    String resp = response.body().string();
-                    Log.d(TAG, "onResponse: " + resp);
-                }
-            });
+            }).start();
         } catch (Exception e) {
             Log.e(TAG, "report: ", e);
         }

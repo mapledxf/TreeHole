@@ -7,7 +7,7 @@ public interface FaceCallback {
 
     void OnFaceDisappear();
 
-    void OnFaceSessionEnd();
+    void OnFaceSessionEnd(String userName);
 
     void OnError(int errorCode);
 

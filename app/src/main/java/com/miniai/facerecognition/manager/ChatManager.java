@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,6 +20,7 @@ import com.miniai.facerecognition.callback.ChatCallback;
 import com.miniai.facerecognition.chat.ChatAdapter;
 import com.miniai.facerecognition.chat.ChatMessage;
 import com.miniai.facerecognition.chat.DeepSeekResponse;
+import com.miniai.facerecognition.chat.DeepSeekStreamResponse;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,15 +45,18 @@ import okhttp3.ResponseBody;
 public class ChatManager {
     private static final String TAG = "[TreeHole]ChatManager";
 
-    private String prompt;
+    private String chatPrompt;
+    private String evaluationPrompt;
     private final OkHttpClient client = new OkHttpClient();
     private final Gson gson = new Gson();
 
     // 定义正则表达式模式
-    private final Pattern pattern = Pattern.compile(
-            "<评估>\\s*(.*?)\\s*<理由>\\s*(.*?)\\s*<正文>\\s*(.*)",
-            Pattern.DOTALL
-    );
+//    private final Pattern pattern = Pattern.compile(
+//            "<评估>\\s*(.*?)\\s*<理由>\\s*(.*?)",
+//            Pattern.DOTALL
+//    );
+    Pattern pattern = Pattern.compile("<评估>\\s*(.*?)\\s*<理由>\\s*(.*)");
+
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private ChatAdapter chatAdapter;
     private final List<ChatMessage> messages = new ArrayList<>();
@@ -86,7 +91,8 @@ public class ChatManager {
         chatAdapter = new ChatAdapter(messages);
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
         chatRecyclerView.setAdapter(chatAdapter);
-        prompt = Utils.readFileFromAssets(App.getInstance(), "prompt.txt");
+        chatPrompt = Utils.readFileFromAssets(App.getInstance(), "chat_prompt.txt");
+        evaluationPrompt = Utils.readFileFromAssets(App.getInstance(), "evaluation_prompt.txt");
         Log.d(TAG, "init success");
     }
 
@@ -100,6 +106,83 @@ public class ChatManager {
         } catch (JSONException e) {
             Log.e(TAG, "addUserMessage: ", e);
         }
+    }
+
+    public Pair<String, String> evaluate(String string) {
+        try {
+            JSONObject jsonBodyObject = getEvaluationBody(string);
+            Log.d(TAG, "evaluate: " + jsonBodyObject);
+
+            RequestBody body = RequestBody.create(
+                    jsonBodyObject.toString(),
+                    MediaType.parse("application/json; charset=utf-8"));
+
+            Request request = new Request.Builder()
+                    .url("https://api.deepseek.com/chat/completions")
+                    .header("Authorization", "Bearer sk-b6e4dfe5aa9c475f8209c1c9c02d5cf0")
+                    .post(body)
+                    .build();
+            try (Response res = client.newCall(request).execute()) {
+                if (res.isSuccessful() && res.body() != null) {
+                    String responseBody = res.body().string(); // 一次性读取整个响应体
+                    Log.d(TAG, "evaluate result: " + responseBody);
+                    DeepSeekResponse response = gson.fromJson(responseBody, DeepSeekResponse.class);
+                    if (response != null &&
+                            response.getChoices() != null &&
+                            !response.getChoices().isEmpty() &&
+                            response.getChoices().get(0).getMessage() != null) {
+                        String fullContent = response.getChoices().get(0).getMessage().getContent();
+                        Matcher matcher = pattern.matcher(fullContent);
+                        if (matcher.find()) {
+                            String label = matcher.group(1);
+                            if (label != null) {
+                                label = label.trim();
+                            }
+                            String reason = matcher.group(2);
+                            if (reason != null) {
+                                reason = reason.trim();
+                            }
+
+                            Log.d(TAG, "Label: " + label);
+                            Log.d(TAG, "Reason: " + reason);
+
+                            return new Pair<>(label, reason);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "evaluate: ", e);
+            }
+
+
+        } catch (Exception e) {
+            Log.e(TAG, "evaluate: ", e);
+        }
+
+        return null;
+    }
+
+    @NonNull
+    private JSONObject getEvaluationBody(String string) throws JSONException {
+        JSONObject jsonBodyObject = new JSONObject();
+        jsonBodyObject.put("model", "deepseek-chat");
+        jsonBodyObject.put("stream", false);
+
+
+        JSONObject systemPrompt = new JSONObject();
+        systemPrompt.put("role", "system");
+        systemPrompt.put("content", evaluationPrompt);
+
+        JSONObject userMessage = new JSONObject();
+        userMessage.put("role", "user");
+        userMessage.put("content", string);
+
+        JSONArray messagesArray = new JSONArray();
+        messagesArray.put(systemPrompt);
+        messagesArray.put(userMessage);
+
+        jsonBodyObject.put("messages", messagesArray);
+        return jsonBodyObject;
     }
 
     private void requestDeepSeek() throws JSONException {
@@ -131,10 +214,6 @@ public class ChatManager {
                 if (res.isSuccessful() && res.body() != null) {
                     ResponseBody responseBody = res.body();
                     BufferedReader reader = new BufferedReader(responseBody.charStream());
-                    boolean shouldOutput = false;
-                    StringBuilder evaluation = new StringBuilder();
-                    String label = "";
-                    String reason = "";
                     String line;
                     while ((line = reader.readLine()) != null) {
                         if (line.startsWith("data: ")) {
@@ -142,39 +221,20 @@ public class ChatManager {
                             if (jsonData.trim().equals("[DONE]")) {
                                 Log.d(TAG, "onResponse: " + messages.get(messages.size() - 1).getContent());
                                 if (callback != null) {
-                                    callback.OnChatEnd(label, reason, messages);
+                                    callback.OnChatEnd(messages);
                                 }
                                 mainHandler.post(() -> recyclerView.scrollToPosition(messages.size() - 1));
                                 break;
                             }
                             try {
-                                DeepSeekResponse response = gson.fromJson(jsonData, DeepSeekResponse.class);
+                                DeepSeekStreamResponse response = gson.fromJson(jsonData, DeepSeekStreamResponse.class);
                                 if (response != null &&
                                         response.getChoices() != null &&
                                         !response.getChoices().isEmpty() &&
                                         response.getChoices().get(0).getDelta() != null) {
                                     String content = response.getChoices().get(0).getDelta().getContent();
                                     if (!TextUtils.isEmpty(content)) {
-                                        if (shouldOutput) {
-                                            appendAIMessage(content);
-                                        } else {
-                                            // 解析<评估> XXX <理由> XXX <正文> XXX
-                                            evaluation.append(content);
-
-                                            Matcher matcher = pattern.matcher(evaluation.toString());
-                                            if (matcher.find()) {
-                                                label = matcher.group(1);
-                                                reason = matcher.group(2);
-                                                String text = matcher.group(3);
-                                                Log.d(TAG, "Label: " + label);
-                                                Log.d(TAG, "Reason: " + reason);
-                                                Log.d(TAG, "Content: " + text);
-                                                if (!TextUtils.isEmpty(text)) {
-                                                    appendAIMessage(text);
-                                                }
-                                                shouldOutput = true;
-                                            }
-                                        }
+                                        appendAIMessage(content);
                                     }
                                 }
                             } catch (JsonSyntaxException e) {
@@ -199,7 +259,7 @@ public class ChatManager {
         JSONArray messagesArray = new JSONArray();
         JSONObject systemPrompt = new JSONObject();
         systemPrompt.put("role", "system");
-        systemPrompt.put("content", prompt);
+        systemPrompt.put("content", chatPrompt);
         messagesArray.put(systemPrompt);
         for (ChatMessage msg : messages) {
             JSONObject messageJson = new JSONObject();
@@ -223,6 +283,10 @@ public class ChatManager {
     public void reset() {
         messages.clear();
         chatAdapter.notifyDataSetChanged();
+    }
+
+    public List<ChatMessage> getMessages() {
+        return messages;
     }
 
 }

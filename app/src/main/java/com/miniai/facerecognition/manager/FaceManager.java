@@ -165,10 +165,10 @@ public class FaceManager {
                     state = STATE.QUITING;
                     handler.removeCallbacksAndMessages(null);
                     handler.postDelayed(() -> {
-                        currentUser = null;
                         Log.d(TAG, "from " + state + " to " + STATE.IDLE);
                         state = STATE.IDLE;
-                        callback.OnFaceSessionEnd();
+                        callback.OnFaceSessionEnd(currentUser.userName);
+                        currentUser = null;
                     }, 5000);
 //                                } else if (state == STATE.QUITING) {
                 }
