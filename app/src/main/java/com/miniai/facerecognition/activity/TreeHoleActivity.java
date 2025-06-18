@@ -1,6 +1,7 @@
 package com.miniai.facerecognition.activity;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -9,6 +10,7 @@ import androidx.camera.view.PreviewView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -37,6 +39,9 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     private View faceStatus;
     private View asrStatus;
 
+    private View pushToTalk;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,6 +55,22 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
 //            onResult("我的老师打我");  //测试deepseek
         });
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
+
+        pushToTalk = findViewById(R.id.p2t);
+        pushToTalk.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    AsrManager.getInstance().startAsr();
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    v.setPressed(false);
+                    AsrManager.getInstance().stopAsr();
+                    return true;
+            }
+            return false;
+        });
+        pushToTalk.setVisibility(View.GONE);
 
         faceStatus = findViewById(R.id.face_status);
         asrStatus = findViewById(R.id.asr_status);
