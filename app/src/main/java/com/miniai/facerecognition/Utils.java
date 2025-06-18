@@ -1,13 +1,20 @@
 package com.miniai.facerecognition;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 public class Utils {
+    private static final String TAG = "[TreeHole]Utils";
 
     public static Rect getBestRect(int width, int height, Rect srcRect) {
         if (srcRect == null) {
@@ -31,8 +38,6 @@ public class Utils {
     }
 
     public static Bitmap crop(final Bitmap src, final int srcX, int srcY, int srcCroppedW, int srcCroppedH, int newWidth, int newHeight) {
-        final int srcWidth = src.getWidth();
-        final int srcHeight = src.getHeight();
         float scaleWidth = ((float) newWidth) / srcCroppedW;
         float scaleHeight = ((float) newHeight) / srcCroppedH;
 
@@ -40,9 +45,8 @@ public class Utils {
 
         m.setScale(1.0f, 1.0f);
         m.postScale(scaleWidth, scaleHeight);
-        final Bitmap cropped = Bitmap.createBitmap(src, srcX, srcY, srcCroppedW, srcCroppedH, m,
-                true /* filter */);
-        return cropped;
+        return Bitmap.createBitmap(src, srcX, srcY, srcCroppedW, srcCroppedH, m,
+                true);
     }
 
     public static void showAlertDialog(Context context, String message) {
@@ -67,5 +71,23 @@ public class Utils {
         // Create and show the AlertDialog
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
+    }
+
+    public static String readFileFromAssets(Context context, String fileName) {
+        AssetManager assetManager = context.getAssets();
+        StringBuilder stringBuilder = new StringBuilder();
+
+        try (InputStream inputStream = assetManager.open(fileName);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line).append("\n");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "readFileFromAssets: ", e);
+        }
+
+        return stringBuilder.toString().trim();
     }
 }

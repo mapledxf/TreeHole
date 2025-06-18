@@ -5,4 +5,6 @@ public interface ChatCallback {
     void onChatEnd();
 
     void onChatError(String message);
+
+    void OnEvaluation(String label, String reason);
 }
