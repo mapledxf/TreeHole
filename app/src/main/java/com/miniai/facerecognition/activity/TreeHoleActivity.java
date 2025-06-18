@@ -20,11 +20,15 @@ import com.miniai.facerecognition.callback.AsrCallback;
 import com.miniai.facerecognition.callback.ChatCallback;
 import com.miniai.facerecognition.callback.FaceCallback;
 import com.miniai.facerecognition.callback.TtsCallback;
+import com.miniai.facerecognition.chat.ChatMessage;
 import com.miniai.facerecognition.manager.AsrManager;
 import com.miniai.facerecognition.manager.ChatManager;
 import com.miniai.facerecognition.manager.FaceManager;
+import com.miniai.facerecognition.manager.ReportManager;
 import com.miniai.facerecognition.manager.TtsManager;
 import com.miniai.facerecognition.utils.permission.PermissionHelper;
+
+import java.util.List;
 
 public class TreeHoleActivity extends AppCompatActivity implements FaceCallback, AsrCallback, ChatCallback, TtsCallback {
     private static final String TAG = "[TreeHole]TreeHoleActivity";
@@ -168,19 +172,17 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void onChatEnd() {
-        Log.d(TAG, "onChatEnd: ");
-    }
-
-    @Override
     public void onChatError(String message) {
         Log.e(TAG, "onChatError: " + message);
     }
 
     @Override
-    public void OnChatEvaluation(String label, String reason) {
+    public void OnChatEnd(String label, String reason, List<ChatMessage> messages) {
         if (!"无".equals(label)) {
-            runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this, label + " \n" + reason, Toast.LENGTH_LONG).show());
+            runOnUiThread(() -> {
+                Toast.makeText(TreeHoleActivity.this, label + " \n" + reason, Toast.LENGTH_LONG).show();
+                ReportManager.getInstance().report(FaceManager.getInstance().getUserName(), label, reason, messages);
+            });
         }
     }
 

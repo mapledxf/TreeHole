@@ -133,6 +133,8 @@ public class ChatManager {
                     BufferedReader reader = new BufferedReader(responseBody.charStream());
                     boolean shouldOutput = false;
                     StringBuilder evaluation = new StringBuilder();
+                    String label = "";
+                    String reason = "";
                     String line;
                     while ((line = reader.readLine()) != null) {
                         if (line.startsWith("data: ")) {
@@ -140,9 +142,9 @@ public class ChatManager {
                             if (jsonData.trim().equals("[DONE]")) {
                                 Log.d(TAG, "onResponse: " + messages.get(messages.size() - 1).getContent());
                                 if (callback != null) {
-                                    callback.onChatEnd();
-                                    mainHandler.post(() -> recyclerView.scrollToPosition(messages.size() - 1));
+                                    callback.OnChatEnd(label, reason, messages);
                                 }
+                                mainHandler.post(() -> recyclerView.scrollToPosition(messages.size() - 1));
                                 break;
                             }
                             try {
@@ -161,10 +163,9 @@ public class ChatManager {
 
                                             Matcher matcher = pattern.matcher(evaluation.toString());
                                             if (matcher.find()) {
-                                                String label = matcher.group(1);
-                                                String reason = matcher.group(2);
+                                                label = matcher.group(1);
+                                                reason = matcher.group(2);
                                                 String text = matcher.group(3);
-                                                callback.OnChatEvaluation(label, reason);
                                                 Log.d(TAG, "Label: " + label);
                                                 Log.d(TAG, "Reason: " + reason);
                                                 Log.d(TAG, "Content: " + text);

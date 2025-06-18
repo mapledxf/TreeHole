@@ -1,10 +1,13 @@
 package com.miniai.facerecognition.callback;
 
+import com.miniai.facerecognition.chat.ChatMessage;
+
+import java.util.List;
+
 public interface ChatCallback {
     void onChatStart();
-    void onChatEnd();
 
     void onChatError(String message);
 
-    void OnChatEvaluation(String label, String reason);
+    void OnChatEnd(String label, String reason, List<ChatMessage> messages);
 }

@@ -390,4 +390,8 @@ public class FaceManager {
         UserInfo face = new UserInfo(userId, name, faceImage, featData);
         UserDB.userInfos.add(face);
     }
+
+    public String getUserName() {
+        return currentUser.userName;
+    }
 }
