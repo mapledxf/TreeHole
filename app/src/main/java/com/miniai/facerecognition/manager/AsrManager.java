@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -18,6 +19,7 @@ import androidx.core.app.ActivityCompat;
 import com.k2fsa.sherpa.ncnn.IAsrService;
 import com.k2fsa.sherpa.ncnn.IRecognitionCallback;
 import com.miniai.facerecognition.App;
+import com.miniai.facerecognition.callback.AsrCallback;
 
 public class AsrManager {
     private static final String TAG = "[TreeHole]AsrManager";
@@ -26,21 +28,28 @@ public class AsrManager {
     private Thread recordingThread;
     private boolean isRecording = false;
     private boolean isRecognizing = false;
+    private AsrCallback asrCallback = null;
 
     private final IRecognitionCallback.Stub clientCallback = new IRecognitionCallback.Stub() {
         @Override
         public void onResult(String result) {
-            Log.d(TAG, "Final Result: " + result);
+            if (asrCallback != null) {
+                asrCallback.onResult(result);
+            }
         }
 
         @Override
         public void onPartialResult(String partialResult) {
-            Log.d(TAG, "Partial Result: " + partialResult);
+            if (asrCallback != null) {
+                asrCallback.onPartialResult(partialResult);
+            }
         }
 
         @Override
         public void onError(String errorMessage) {
-            Log.e(TAG, "Error from service: " + errorMessage);
+            if (asrCallback != null) {
+                asrCallback.onError(errorMessage);
+            }
         }
     };
 
@@ -97,20 +106,28 @@ public class AsrManager {
             );
             intent.setComponent(componentName);
             boolean bindResult = App.getInstance().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+            if (!bindResult) {
+                new Handler().postDelayed(() -> {
+                    Log.w(TAG, "绑定失败，尝试重新绑定...");
+                    init();
+                }, 2000); // 2秒后重试
+            }
             Log.i(TAG, "Attempting to bind service, result: " + bindResult);
         }
         return true;
     }
 
-    public void startAsr() {
+    public void startAsr(AsrCallback callback) {
         if (!isServiceBound || asrService == null) {
             Log.e(TAG, "Service not bound yet");
             return;
         }
+        this.asrCallback = callback;
         try {
             if (!isRecognizing) {
                 asrService.reset(true);
                 isRecognizing = true;
+                Log.d(TAG, "startAsr: ");
             }
         } catch (Exception e) {
             Log.e(TAG, "start: ", e);
@@ -124,6 +141,7 @@ public class AsrManager {
         }
         if (isRecognizing) {
             isRecognizing = false;
+            Log.d(TAG, "stopAsr: ");
         }
     }
 
@@ -190,6 +208,8 @@ public class AsrManager {
                             } catch (RemoteException e) {
                                 Log.e(TAG, "Failed to process samples", e);
                             }
+                        } else {
+                            Log.e(TAG, "startRecording: asrService is null");
                         }
                     }
                 }

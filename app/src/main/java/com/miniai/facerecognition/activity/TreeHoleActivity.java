@@ -17,12 +17,13 @@ import android.widget.Toast;
 import com.miniai.facerecognition.R;
 import com.miniai.facerecognition.UserActivity;
 import com.miniai.facerecognition.UserInfo;
+import com.miniai.facerecognition.callback.AsrCallback;
 import com.miniai.facerecognition.callback.FaceCallback;
 import com.miniai.facerecognition.manager.AsrManager;
 import com.miniai.facerecognition.manager.FaceManager;
 import com.miniai.facerecognition.utils.permission.PermissionHelper;
 
-public class TreeHoleActivity extends AppCompatActivity implements FaceCallback {
+public class TreeHoleActivity extends AppCompatActivity implements FaceCallback, AsrCallback {
     private static final String TAG = "TreeHoleActivity";
 
     private PreviewView previewView;
@@ -42,28 +43,20 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback 
 
         status = findViewById(R.id.status);
 
-//        PermissionHelper permissionHelper = new PermissionHelper(granted -> {
-//            if (granted) {
-//                FaceManager.getInstance().startFaceRecognition(this, previewView, this);
-//            }
-//        });
-//        permissionHelper.checkPermissions(getApplicationContext(),
-//                Manifest.permission.RECORD_AUDIO,
-//                Manifest.permission.CAMERA);
+        PermissionHelper permissionHelper = new PermissionHelper(granted -> {
+            if (granted) {
+                Log.d(TAG, "onCreate: permission granted");
+            }
+        });
+        permissionHelper.checkPermissions(getApplicationContext(),
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.CAMERA);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.CAMERA},
-                    101
-            );
-        } else {
+        if (!FaceManager.getInstance().isRunning()) {
             FaceManager.getInstance().startFaceRecognition(this, previewView, this);
         }
     }
@@ -83,7 +76,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback 
         runOnUiThread(() -> {
             updateStatus(userName);
             Toast.makeText(TreeHoleActivity.this, "Hello " + userName, Toast.LENGTH_SHORT).show();
-            AsrManager.getInstance().startAsr();
+            AsrManager.getInstance().startAsr(this);
         });
     }
 
@@ -120,5 +113,20 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback 
     @Override
     public void OnError(int errorCode) {
         runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this, "Error " + errorCode, Toast.LENGTH_SHORT).show());
+    }
+
+    @Override
+    public void onResult(String result) {
+        Log.d(TAG, "onResult: " + result);
+    }
+
+    @Override
+    public void onPartialResult(String partialResult) {
+        Log.d(TAG, "onPartialResult: " + partialResult);
+    }
+
+    @Override
+    public void onError(String error) {
+        Log.d(TAG, "onError: " + error);
     }
 }
