@@ -152,6 +152,8 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
 
     @Override
     public void OnEvaluation(String label, String reason) {
-        runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this, label + " \n" + reason, Toast.LENGTH_LONG).show());
+        if (!"无".equals(label)) {
+            runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this, label + " \n" + reason, Toast.LENGTH_LONG).show());
+        }
     }
 }
