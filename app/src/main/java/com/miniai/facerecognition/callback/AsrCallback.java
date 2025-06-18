@@ -1,7 +1,7 @@
 package com.miniai.facerecognition.callback;
 
 public interface AsrCallback {
-    void onResult(String result);
-    void onPartialResult(String partialResult);
-    void onError(String error);
+    void onAsrFinalResult(String result);
+    void onAsrPartialResult(String partialResult);
+    void onAsrError(String error);
 }

@@ -35,7 +35,7 @@ public class AsrManager {
         public void onResult(String result) {
             Log.d(TAG, "onResult: " + result);
             if (asrCallback != null) {
-                asrCallback.onResult(result);
+                asrCallback.onAsrFinalResult(result);
             }
         }
 
@@ -43,7 +43,7 @@ public class AsrManager {
         public void onPartialResult(String partialResult) {
             Log.d(TAG, "onPartialResult: " + partialResult);
             if (asrCallback != null) {
-                asrCallback.onPartialResult(partialResult);
+                asrCallback.onAsrPartialResult(partialResult);
             }
         }
 
@@ -51,7 +51,7 @@ public class AsrManager {
         public void onError(String errorMessage) {
             Log.e(TAG, "onError: " + errorMessage);
             if (asrCallback != null) {
-                asrCallback.onError(errorMessage);
+                asrCallback.onAsrError(errorMessage);
             }
         }
     };
@@ -120,12 +120,15 @@ public class AsrManager {
         return true;
     }
 
-    public void startAsr(AsrCallback callback) {
+    public void setAsrCallback(AsrCallback callback) {
+        this.asrCallback = callback;
+    }
+
+    public void startAsr() {
         if (!isServiceBound || asrService == null) {
             Log.e(TAG, "Service not bound yet");
             return;
         }
-        this.asrCallback = callback;
         try {
             if (!isRecognizing) {
                 asrService.reset(true);

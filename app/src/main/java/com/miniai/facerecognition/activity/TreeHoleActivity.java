@@ -19,12 +19,14 @@ import com.miniai.facerecognition.UserInfo;
 import com.miniai.facerecognition.callback.AsrCallback;
 import com.miniai.facerecognition.callback.ChatCallback;
 import com.miniai.facerecognition.callback.FaceCallback;
+import com.miniai.facerecognition.callback.TtsCallback;
 import com.miniai.facerecognition.manager.AsrManager;
 import com.miniai.facerecognition.manager.ChatManager;
 import com.miniai.facerecognition.manager.FaceManager;
+import com.miniai.facerecognition.manager.TtsManager;
 import com.miniai.facerecognition.utils.permission.PermissionHelper;
 
-public class TreeHoleActivity extends AppCompatActivity implements FaceCallback, AsrCallback, ChatCallback {
+public class TreeHoleActivity extends AppCompatActivity implements FaceCallback, AsrCallback, ChatCallback, TtsCallback {
     private static final String TAG = "[TreeHole]TreeHoleActivity";
 
     private PreviewView previewView;
@@ -43,7 +45,6 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
 //            onResult("我的老师打我");  //测试deepseek
         });
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
-        ChatManager.getInstance().init(this, chatRecyclerView, this);
 
         status = findViewById(R.id.status);
 
@@ -56,13 +57,20 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
                 Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.CAMERA,
                 Manifest.permission.INTERNET);
+
+        ChatManager.getInstance().init(this, chatRecyclerView);
+
+        FaceManager.getInstance().setFaceCallback(this);
+        ChatManager.getInstance().setChatCallback(this);
+        AsrManager.getInstance().setAsrCallback(this);
+        TtsManager.getInstance().setTtsCallback(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (!FaceManager.getInstance().isRunning()) {
-            FaceManager.getInstance().startFaceRecognition(this, previewView, this);
+            FaceManager.getInstance().startFaceRecognition(this, previewView);
         }
     }
 
@@ -77,11 +85,11 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void OnSessionStart(String userName) {
+    public void OnFaceSessionStart(String userName) {
         runOnUiThread(() -> {
             updateStatus(userName);
             Toast.makeText(TreeHoleActivity.this, "Hello " + userName, Toast.LENGTH_SHORT).show();
-            AsrManager.getInstance().startAsr(this);
+            AsrManager.getInstance().startAsr();
         });
     }
 
@@ -94,7 +102,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void OnSessionResume(String userName) {
+    public void OnFaceSessionResume(String userName) {
         runOnUiThread(() -> updateStatus(userName));
     }
 
@@ -107,12 +115,13 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void OnSessionEnd() {
+    public void OnFaceSessionEnd() {
         runOnUiThread(() -> {
             status.setBackgroundResource(android.R.color.holo_red_dark);
             Toast.makeText(TreeHoleActivity.this, "Bye ", Toast.LENGTH_SHORT).show();
             AsrManager.getInstance().stopAsr();
             ChatManager.getInstance().reset();
+            TtsManager.getInstance().stop();
         });
     }
 
@@ -122,18 +131,19 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void onResult(String result) {
+    public void onAsrFinalResult(String result) {
         Log.d(TAG, "onResult: " + result);
+        AsrManager.getInstance().stopAsr();
         runOnUiThread(() -> ChatManager.getInstance().addUserMessage(result));
     }
 
     @Override
-    public void onPartialResult(String partialResult) {
+    public void onAsrPartialResult(String partialResult) {
         Log.d(TAG, "onPartialResult: " + partialResult);
     }
 
     @Override
-    public void onError(String error) {
+    public void onAsrError(String error) {
         Log.d(TAG, "onError: " + error);
     }
 
@@ -153,9 +163,24 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void OnEvaluation(String label, String reason) {
+    public void OnChatEvaluation(String label, String reason) {
         if (!"无".equals(label)) {
             runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this, label + " \n" + reason, Toast.LENGTH_LONG).show());
         }
+    }
+
+    @Override
+    public void onTtsStart() {
+        AsrManager.getInstance().stopAsr();
+    }
+
+    @Override
+    public void onTtsFinish() {
+        AsrManager.getInstance().startAsr();
+    }
+
+    @Override
+    public void onTtsError() {
+
     }
 }

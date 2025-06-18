@@ -77,9 +77,12 @@ public class ChatManager {
         return Holder.INSTANCE;
     }
 
-    public void init(Activity activity, RecyclerView chatRecyclerView, ChatCallback callback) {
-        this.recyclerView = chatRecyclerView;
+    public void setChatCallback(ChatCallback callback) {
         this.callback = callback;
+    }
+
+    public void init(Activity activity, RecyclerView chatRecyclerView) {
+        this.recyclerView = chatRecyclerView;
         chatAdapter = new ChatAdapter(messages);
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
         chatRecyclerView.setAdapter(chatAdapter);
@@ -161,7 +164,7 @@ public class ChatManager {
                                                 String label = matcher.group(1);
                                                 String reason = matcher.group(2);
                                                 String text = matcher.group(3);
-                                                callback.OnEvaluation(label, reason);
+                                                callback.OnChatEvaluation(label, reason);
                                                 Log.d(TAG, "Label: " + label);
                                                 Log.d(TAG, "Reason: " + reason);
                                                 Log.d(TAG, "Content: " + text);
@@ -209,8 +212,9 @@ public class ChatManager {
 
     private void appendAIMessage(String message) {
         mainHandler.post(() -> {
-            chatAdapter.appendAIMessage(message);
+            String msg = chatAdapter.appendAIMessage(message);
             recyclerView.scrollToPosition(messages.size() - 1);
+            TtsManager.getInstance().play(msg);
         });
     }
 

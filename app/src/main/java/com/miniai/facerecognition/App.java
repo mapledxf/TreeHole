@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.miniai.facerecognition.manager.AsrManager;
 import com.miniai.facerecognition.manager.FaceManager;
+import com.miniai.facerecognition.manager.TtsManager;
 
 public class App extends Application {
     private static final String TAG = "[TreeHole]";
@@ -23,7 +24,7 @@ public class App extends Application {
     }
 
     public void init() {
-        if (FaceManager.getInstance().init() && AsrManager.getInstance().init()) {
+        if (FaceManager.getInstance().init() && AsrManager.getInstance().init() && TtsManager.getInstance().init()) {
             Log.d(TAG, "init success");
         }
     }

@@ -6,5 +6,5 @@ public interface ChatCallback {
 
     void onChatError(String message);
 
-    void OnEvaluation(String label, String reason);
+    void OnChatEvaluation(String label, String reason);
 }

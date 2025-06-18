@@ -42,6 +42,7 @@ public class FaceManager {
     private final AtomicBoolean isRunning;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private UserDB userDB;
+    private FaceCallback callback;
 
     enum STATE {
         QUITING, IDLE, WAITING, WORKING, ANONYMOUS
@@ -104,8 +105,11 @@ public class FaceManager {
         }
     }
 
+    public void setFaceCallback(FaceCallback callback) {
+        this.callback = callback;
+    }
 
-    public void startFaceRecognition(AppCompatActivity activity, PreviewView previewView, FaceCallback callback) {
+    public void startFaceRecognition(AppCompatActivity activity, PreviewView previewView) {
         isRunning.set(true);
 
         cameraProviderFuture.addListener(() -> {
@@ -164,7 +168,7 @@ public class FaceManager {
                         currentUser = null;
                         Log.d(TAG, "from " + state + " to " + STATE.IDLE);
                         state = STATE.IDLE;
-                        callback.OnSessionEnd();
+                        callback.OnFaceSessionEnd();
                     }, 5000);
 //                                } else if (state == STATE.QUITING) {
                 }
@@ -183,7 +187,7 @@ public class FaceManager {
                             Log.d(TAG, "from " + state + " to " + STATE.ANONYMOUS);
                             state = STATE.ANONYMOUS;
                             currentUser = result.second;
-                            callback.OnSessionStart(currentUser.userName);
+                            callback.OnFaceSessionStart(currentUser.userName);
                         }, 2000);
                     } else if (currentUser.userId == -1) {
                         // 检测到人脸，但是没有找到注册信息，如果当前是退出阶段，等待还未超时，
@@ -192,7 +196,7 @@ public class FaceManager {
                             handler.removeCallbacksAndMessages(null);
                             Log.d(TAG, "from " + state + " to " + STATE.ANONYMOUS + " previous is unknown");
                             state = STATE.ANONYMOUS;
-                            callback.OnSessionResume(currentUser.userName);
+                            callback.OnFaceSessionResume(currentUser.userName);
                         }
                     } else if (currentUser.userName.equals(result.second.userName)) {
                         // 检测到人脸，但是没有找到注册信息，如果当前是退出阶段，等待还未超时，
@@ -200,7 +204,7 @@ public class FaceManager {
                         handler.removeCallbacksAndMessages(null);
                         Log.d(TAG, "from " + state + " to " + STATE.WORKING + " previous is " + currentUser.userName);
                         state = STATE.WORKING;
-                        callback.OnSessionResume(currentUser.userName);
+                        callback.OnFaceSessionResume(currentUser.userName);
                     }
                 } else if (state == STATE.IDLE) {
                     // 检测到人脸，但是没有找到注册信息
@@ -212,7 +216,7 @@ public class FaceManager {
                         Log.d(TAG, "from " + state + " to " + STATE.ANONYMOUS);
                         state = STATE.ANONYMOUS;
                         currentUser = result.second;
-                        callback.OnSessionStart(currentUser.userName);
+                        callback.OnFaceSessionStart(currentUser.userName);
                     }, 2000);
 //                                } else if (state == STATE.WORKING) {
 //                                } else if (state == STATE.WAITING) {
@@ -227,7 +231,7 @@ public class FaceManager {
                     handler.removeCallbacksAndMessages(null);
                     Log.d(TAG, "from " + state + " to " + STATE.WORKING);
                     state = STATE.WORKING;
-                    callback.OnSessionStart(result.second.userName);
+                    callback.OnFaceSessionStart(result.second.userName);
                 } else if (state == STATE.QUITING) {
                     // 检测到人脸，找到注册信息
                     // 如果之前是在等待退出
@@ -239,7 +243,7 @@ public class FaceManager {
                         Log.d(TAG, "from " + state + " to " + STATE.WORKING);
                         state = STATE.WORKING;
                         currentUser = result.second;
-                        callback.OnSessionStart(currentUser.userName);
+                        callback.OnFaceSessionStart(currentUser.userName);
                     } else if (currentUser.userId == -1) {
                         // 检测到人脸，找到注册信息
                         // 如果之前是在等待退出
@@ -248,7 +252,7 @@ public class FaceManager {
                             handler.removeCallbacksAndMessages(null);
                             Log.d(TAG, "from " + state + " to " + STATE.WORKING + " previous is unknow or null");
                             state = STATE.WORKING;
-                            callback.OnSessionResume(currentUser.userName);
+                            callback.OnFaceSessionResume(currentUser.userName);
                         }
                     } else if (currentUser.userName.equals(result.second.userName)) {
                         // 检测到人脸，找到注册信息
@@ -257,7 +261,7 @@ public class FaceManager {
                         handler.removeCallbacksAndMessages(null);
                         Log.d(TAG, "from " + state + " to " + STATE.WORKING + " previous is " + currentUser.userName);
                         state = STATE.WORKING;
-                        callback.OnSessionResume(currentUser.userName);
+                        callback.OnFaceSessionResume(currentUser.userName);
                     }
                 } else if (state == STATE.IDLE) {
                     // 检测到人脸，找到注册信息
@@ -267,7 +271,7 @@ public class FaceManager {
                     Log.d(TAG, "from " + state + " to " + STATE.WORKING);
                     state = STATE.WORKING;
                     currentUser = result.second;
-                    callback.OnSessionStart(currentUser.userName);
+                    callback.OnFaceSessionStart(currentUser.userName);
 //                                } else if (state == STATE.ANONYMOUS) {
 //                                } else if (state == STATE.WORKING) {
                 }
