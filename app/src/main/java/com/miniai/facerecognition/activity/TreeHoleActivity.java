@@ -1,6 +1,7 @@
 package com.miniai.facerecognition.activity;
 
 import android.Manifest;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,6 +14,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.miniai.facerecognition.R;
+import com.miniai.facerecognition.UserActivity;
 import com.miniai.facerecognition.UserInfo;
 import com.miniai.facerecognition.callback.AsrCallback;
 import com.miniai.facerecognition.callback.ChatCallback;
@@ -36,9 +38,9 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
 
         previewView = findViewById(R.id.preview_view);
         previewView.setOnClickListener(v -> {
-//            Intent intent = new Intent(this, UserActivity.class);
-//            startActivity(intent);
-            onResult("我的老师打我");  //测试deepseek
+            Intent intent = new Intent(this, UserActivity.class);
+            startActivity(intent);
+//            onResult("我的老师打我");  //测试deepseek
         });
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
         ChatManager.getInstance().init(this, chatRecyclerView, this);
@@ -122,7 +124,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void onResult(String result) {
         Log.d(TAG, "onResult: " + result);
-        ChatManager.getInstance().addUserMessage(result);
+        runOnUiThread(() -> ChatManager.getInstance().addUserMessage(result));
     }
 
     @Override

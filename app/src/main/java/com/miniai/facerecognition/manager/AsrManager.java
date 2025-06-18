@@ -33,6 +33,7 @@ public class AsrManager {
     private final IRecognitionCallback.Stub clientCallback = new IRecognitionCallback.Stub() {
         @Override
         public void onResult(String result) {
+            Log.d(TAG, "onResult: " + result);
             if (asrCallback != null) {
                 asrCallback.onResult(result);
             }
@@ -40,6 +41,7 @@ public class AsrManager {
 
         @Override
         public void onPartialResult(String partialResult) {
+            Log.d(TAG, "onPartialResult: " + partialResult);
             if (asrCallback != null) {
                 asrCallback.onPartialResult(partialResult);
             }
@@ -47,6 +49,7 @@ public class AsrManager {
 
         @Override
         public void onError(String errorMessage) {
+            Log.e(TAG, "onError: " + errorMessage);
             if (asrCallback != null) {
                 asrCallback.onError(errorMessage);
             }
