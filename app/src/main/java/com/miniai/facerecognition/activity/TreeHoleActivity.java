@@ -8,6 +8,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.View;
@@ -18,13 +19,15 @@ import com.miniai.facerecognition.R;
 import com.miniai.facerecognition.UserActivity;
 import com.miniai.facerecognition.UserInfo;
 import com.miniai.facerecognition.callback.AsrCallback;
+import com.miniai.facerecognition.callback.ChatCallback;
 import com.miniai.facerecognition.callback.FaceCallback;
 import com.miniai.facerecognition.manager.AsrManager;
+import com.miniai.facerecognition.manager.ChatManager;
 import com.miniai.facerecognition.manager.FaceManager;
 import com.miniai.facerecognition.utils.permission.PermissionHelper;
 
-public class TreeHoleActivity extends AppCompatActivity implements FaceCallback, AsrCallback {
-    private static final String TAG = "TreeHoleActivity";
+public class TreeHoleActivity extends AppCompatActivity implements FaceCallback, AsrCallback, ChatCallback {
+    private static final String TAG = "[TreeHole]TreeHoleActivity";
 
     private PreviewView previewView;
     private View status;
@@ -37,9 +40,12 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
 
         previewView = findViewById(R.id.preview_view);
         previewView.setOnClickListener(v -> {
-            Intent intent = new Intent(this, UserActivity.class);
-            startActivity(intent);
+//            Intent intent = new Intent(this, UserActivity.class);
+//            startActivity(intent);
+            onResult("给我讲一个笑话");
         });
+        RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
+        ChatManager.getInstance().init(this, chatRecyclerView, this);
 
         status = findViewById(R.id.status);
 
@@ -50,7 +56,8 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         });
         permissionHelper.checkPermissions(getApplicationContext(),
                 Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.CAMERA);
+                Manifest.permission.CAMERA,
+                Manifest.permission.INTERNET);
     }
 
     @Override
@@ -118,6 +125,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void onResult(String result) {
         Log.d(TAG, "onResult: " + result);
+        ChatManager.getInstance().addUserMessage(result);
     }
 
     @Override
@@ -128,5 +136,20 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void onError(String error) {
         Log.d(TAG, "onError: " + error);
+    }
+
+    @Override
+    public void onChatStart() {
+        Log.d(TAG, "onChatStart: ");
+    }
+
+    @Override
+    public void onChatEnd() {
+        Log.d(TAG, "onChatEnd: ");
+    }
+
+    @Override
+    public void onChatError(String message) {
+        Log.e(TAG, "onChatError: " + message);
     }
 }
