@@ -30,7 +30,8 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     private static final String TAG = "[TreeHole]TreeHoleActivity";
 
     private PreviewView previewView;
-    private View status;
+    private View faceStatus;
+    private View asrStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +47,8 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         });
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
 
-        status = findViewById(R.id.status);
+        faceStatus = findViewById(R.id.face_status);
+        asrStatus = findViewById(R.id.asr_status);
 
         PermissionHelper permissionHelper = new PermissionHelper(granted -> {
             if (granted) {
@@ -95,9 +97,9 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
 
     private void updateStatus(String userName) {
         if (UserInfo.DEFAULT_NAME.equals(userName)) {
-            status.setBackgroundResource(android.R.color.holo_blue_dark);
+            faceStatus.setBackgroundResource(android.R.color.holo_blue_dark);
         } else {
-            status.setBackgroundResource(android.R.color.holo_green_dark);
+            faceStatus.setBackgroundResource(android.R.color.holo_green_dark);
         }
     }
 
@@ -109,7 +111,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void OnFaceDisappear() {
         runOnUiThread(() -> {
-            status.setBackgroundResource(android.R.color.holo_orange_dark);
+            faceStatus.setBackgroundResource(android.R.color.holo_orange_dark);
             Toast.makeText(TreeHoleActivity.this, "Please show your face ", Toast.LENGTH_SHORT).show();
         });
     }
@@ -117,7 +119,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void OnFaceSessionEnd() {
         runOnUiThread(() -> {
-            status.setBackgroundResource(android.R.color.holo_red_dark);
+            faceStatus.setBackgroundResource(android.R.color.holo_red_dark);
             Toast.makeText(TreeHoleActivity.this, "Bye ", Toast.LENGTH_SHORT).show();
             AsrManager.getInstance().stopAsr();
             ChatManager.getInstance().reset();
@@ -128,6 +130,19 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void OnError(int errorCode) {
         runOnUiThread(() -> Toast.makeText(TreeHoleActivity.this, "Error " + errorCode, Toast.LENGTH_SHORT).show());
+    }
+
+    @Override
+    public void onAsrStatusChanged() {
+        runOnUiThread(() -> {
+            if (!AsrManager.getInstance().isAsrConnected()) {
+                asrStatus.setBackgroundResource(android.R.color.darker_gray);
+            } else if (AsrManager.getInstance().isAsrRecognizing()) {
+                asrStatus.setBackgroundResource(android.R.color.holo_green_dark);
+            } else {
+                asrStatus.setBackgroundResource(android.R.color.holo_red_dark);
+            }
+        });
     }
 
     @Override
