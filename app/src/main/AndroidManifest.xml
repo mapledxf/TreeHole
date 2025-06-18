@@ -10,6 +10,7 @@
         android:required="true" />
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:name=".App"
@@ -36,6 +37,7 @@
             android:name=".UserActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />
+        <activity android:name=".utils.permission.PermissionActivity" />
     </application>
 
 </manifest>

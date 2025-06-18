@@ -356,6 +356,10 @@ public class FaceManager {
         }
     }
 
+    public boolean isRunning() {
+        return isRunning.get();
+    }
+
     public void stopFaceRecognition() {
         isRunning.set(false);
         try {
