@@ -1,4 +1,4 @@
-package com.miniai.facerecognition
+package com.miniai.facerecognition.activity
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -14,6 +14,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.miniai.facerecognition.ImageRotator
+import com.miniai.facerecognition.R
+import com.miniai.facerecognition.UserDB
+import com.miniai.facerecognition.UserInfo
+import com.miniai.facerecognition.UsersAdapter
 import com.miniai.facerecognition.manager.FaceManager
 
 class UserActivity : AppCompatActivity() {

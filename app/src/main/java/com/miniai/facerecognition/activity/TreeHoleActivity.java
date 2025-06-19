@@ -15,7 +15,6 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.miniai.facerecognition.R;
-import com.miniai.facerecognition.UserActivity;
 import com.miniai.facerecognition.UserInfo;
 import com.miniai.facerecognition.callback.AsrCallback;
 import com.miniai.facerecognition.callback.ChatCallback;
@@ -77,7 +76,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
             }
 
         });
-        pushToTalk.setVisibility(View.GONE);
+//        pushToTalk.setVisibility(View.GONE);
 
         faceStatus = findViewById(R.id.face_status);
         asrStatus = findViewById(R.id.asr_status);

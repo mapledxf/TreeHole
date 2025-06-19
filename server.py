@@ -171,4 +171,4 @@ curl -v -X POST http://localhost:5000/report \
 """
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=5050)

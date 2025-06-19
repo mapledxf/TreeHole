@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black"
     android:orientation="horizontal"
-    tools:context=".IdentifyActivity">
+    tools:context=".activity.TreeHoleActivity">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chat_recycler_view"
@@ -47,10 +46,19 @@
                 android:background="@android:color/darker_gray" />
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/avatar"
+            android:layout_width="match_parent"
+            android:layout_below="@id/status"
+            android:src="@drawable/avatar"
+            android:layout_marginTop="20dp"
+            android:layout_height="100dp"/>
+
         <androidx.camera.view.PreviewView
             android:id="@+id/preview_view"
             android:layout_width="match_parent"
-            android:layout_below="@id/status"
+            android:layout_below="@id/avatar"
+            android:layout_marginTop="20dp"
             android:layout_height="100dp" />
 
         <TextView

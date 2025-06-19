@@ -37,7 +37,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".UserActivity"
+            android:name=".activity.UserActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />
         <activity android:name=".utils.permission.PermissionActivity" />
