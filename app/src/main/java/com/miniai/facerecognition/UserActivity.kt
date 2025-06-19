@@ -56,6 +56,7 @@ class UserActivity : AppCompatActivity() {
 
                 adapter.notifyDataSetChanged()
                 dialog.dismiss()
+                FaceManager.getInstance().reset()
             }
 
             // Set positive button and its click listener
@@ -66,6 +67,7 @@ class UserActivity : AppCompatActivity() {
 
                 adapter.notifyDataSetChanged()
                 dialog.dismiss()
+                FaceManager.getInstance().reset()
             }
 
             // Create and show the AlertDialo
@@ -186,6 +188,7 @@ class UserActivity : AppCompatActivity() {
                                     getString(R.string.register_successed),
                                     Toast.LENGTH_SHORT
                                 ).show()
+                                FaceManager.getInstance().reset()
                             }
                     }
                 }

@@ -23,7 +23,7 @@
         <LinearLayout
             android:id="@+id/status"
             android:layout_width="match_parent"
-            android:layout_height="3dp"
+            android:layout_height="5dp"
             android:layout_alignParentTop="true"
             android:orientation="horizontal">
 

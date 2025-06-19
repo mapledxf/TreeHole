@@ -147,6 +147,11 @@ public class FaceManager {
         }, ContextCompat.getMainExecutor(App.getInstance()));
     }
 
+    public void reset() {
+        currentUser = null;
+        state = STATE.IDLE;
+    }
+
     private void changeState(Pair<Integer, UserInfo> result, FaceCallback callback) {
         switch (result.first) {
             //未检测到人脸
