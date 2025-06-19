@@ -10,7 +10,6 @@ import androidx.camera.view.PreviewView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -27,10 +26,12 @@ import com.miniai.facerecognition.manager.AsrManager;
 import com.miniai.facerecognition.manager.ChatManager;
 import com.miniai.facerecognition.manager.FaceManager;
 import com.miniai.facerecognition.manager.ReportManager;
+import com.miniai.facerecognition.manager.TestManager;
 import com.miniai.facerecognition.manager.TtsManager;
 import com.miniai.facerecognition.utils.permission.PermissionHelper;
 
 import java.util.List;
+import java.util.Queue;
 
 public class TreeHoleActivity extends AppCompatActivity implements FaceCallback, AsrCallback, ChatCallback, TtsCallback {
     private static final String TAG = "[TreeHole]TreeHoleActivity";
@@ -38,6 +39,8 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     private PreviewView previewView;
     private View faceStatus;
     private View asrStatus;
+
+    private Queue<String> testQueries;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -50,23 +53,29 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         previewView.setOnClickListener(v -> {
             Intent intent = new Intent(this, UserActivity.class);
             startActivity(intent);
-//            onAsrFinalResult("我的老师打我");  //测试deepseek
         });
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
 
         View pushToTalk = findViewById(R.id.p2t);
-        pushToTalk.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    v.setPressed(true);
-                    AsrManager.getInstance().startAsr();
-                    return true;
-                case MotionEvent.ACTION_UP:
-                    v.setPressed(false);
-                    AsrManager.getInstance().stopAsr();
-                    return true;
+//        pushToTalk.setOnTouchListener((v, event) -> {
+//            switch (event.getAction()) {
+//                case MotionEvent.ACTION_DOWN:
+//                    v.setPressed(true);
+//                    AsrManager.getInstance().startAsr();
+//                    return true;
+//                case MotionEvent.ACTION_UP:
+//                    v.setPressed(false);
+//                    AsrManager.getInstance().stopAsr();
+//                    return true;
+//            }
+//            return false;
+//        });
+        pushToTalk.setOnClickListener(v -> {
+            testQueries = TestManager.getInstance().getQueries("Danger");
+            if (!testQueries.isEmpty()) {
+                onAsrFinalResult(testQueries.remove());
             }
-            return false;
+
         });
         pushToTalk.setVisibility(View.GONE);
 
@@ -78,10 +87,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
                 Log.d(TAG, "onCreate: permission granted");
             }
         });
-        permissionHelper.checkPermissions(getApplicationContext(),
-                Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.CAMERA,
-                Manifest.permission.INTERNET);
+        permissionHelper.checkPermissions(getApplicationContext(), Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.INTERNET);
 
         ChatManager.getInstance().init(this, chatRecyclerView);
 
@@ -189,6 +195,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void onChatStart() {
         Log.d(TAG, "onChatStart: ");
+        TtsManager.getInstance().stop();
     }
 
     @Override
@@ -209,6 +216,9 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void onTtsFinish() {
         AsrManager.getInstance().startAsr();
+        if (testQueries != null && !testQueries.isEmpty()) {
+            onAsrFinalResult(testQueries.remove());
+        }
     }
 
     @Override

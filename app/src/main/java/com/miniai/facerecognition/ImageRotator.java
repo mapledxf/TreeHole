@@ -33,16 +33,7 @@ public class ImageRotator {
         BitmapFactory.decodeStream(is, null, dbo);
         is.close();
 
-        int rotatedWidth, rotatedHeight;
         int orientation = getOrientation(context, photoUri);
-
-        if (orientation == 90 || orientation == 270) {
-            rotatedWidth = dbo.outHeight;
-            rotatedHeight = dbo.outWidth;
-        } else {
-            rotatedWidth = dbo.outWidth;
-            rotatedHeight = dbo.outHeight;
-        }
 
         Bitmap srcBitmap;
         is = context.getContentResolver().openInputStream(photoUri);

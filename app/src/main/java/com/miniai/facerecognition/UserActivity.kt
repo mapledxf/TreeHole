@@ -6,10 +6,13 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.*
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.ListView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.fm.face.FaceSDK
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.miniai.facerecognition.manager.FaceManager
 
@@ -88,6 +91,7 @@ class UserActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == ADD_USER_REQUEST_CODE && resultCode == RESULT_OK) {
             try {
                 val bitmap: Bitmap = ImageRotator.getCorrectlyOrientedImage(this, data?.data!!)
@@ -100,6 +104,7 @@ class UserActivity : AppCompatActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     UserInfo.FAKE -> {
                         Toast.makeText(
                             this,
@@ -107,6 +112,7 @@ class UserActivity : AppCompatActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     UserInfo.MULTI_FACE -> {
                         Toast.makeText(
                             this,
@@ -114,6 +120,7 @@ class UserActivity : AppCompatActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     UserInfo.UNKNOWN -> {
                         Toast.makeText(
                             this,
@@ -121,6 +128,7 @@ class UserActivity : AppCompatActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                     UserInfo.SUCCESS -> {
                         val inputView = LayoutInflater.from(this)
                             .inflate(R.layout.dialog_input_view, null, false)
@@ -163,7 +171,9 @@ class UserActivity : AppCompatActivity() {
                                     return@setOnClickListener
                                 }
 
-                                if(!FaceManager.getInstance().insertUser(s, faceImage, bitmap, faceBox.second)){
+                                if (!FaceManager.getInstance()
+                                        .insertUser(s, faceImage, bitmap, faceBox.second)
+                                ) {
                                     editText.error = "Face already exists!"
                                     return@setOnClickListener
                                 }
@@ -179,7 +189,7 @@ class UserActivity : AppCompatActivity() {
                             }
                     }
                 }
-            } catch (e: java.lang.Exception) {
+            } catch (e: Exception) {
                 //handle exception
                 e.printStackTrace()
             }

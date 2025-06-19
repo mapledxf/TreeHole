@@ -101,6 +101,7 @@ public class TtsManager {
             String sentence = text.substring(ttsSentenceEndIndex, nextSentenceEndIndex);
             ttsSentenceEndIndex = nextSentenceEndIndex;
             String id = UUID.randomUUID().toString();
+            Log.d(TAG, "play: id:" + id + " sentence:" + sentence);
             tts.speak(sentence, TextToSpeech.QUEUE_ADD, null, id);
             ttsLastId = id;
         }
