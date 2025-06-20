@@ -101,6 +101,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         super.onResume();
         if (!FaceManager.getInstance().isRunning()) {
             FaceManager.getInstance().startFaceRecognition(this, previewView);
+            TtsManager.getInstance().stop();
         }
     }
 

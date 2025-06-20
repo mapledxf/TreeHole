@@ -162,12 +162,12 @@ public class AsrManager {
             Log.e(TAG, "Service not bound yet");
             return;
         }
+        Log.d(TAG, "stopAsr: ");
         if (isRecognizing) {
             isRecognizing = false;
             if (asrCallback != null) {
                 asrCallback.onAsrStatusChanged();
             }
-            Log.d(TAG, "stopAsr: ");
         }
     }
 
