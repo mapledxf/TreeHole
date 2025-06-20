@@ -62,7 +62,7 @@ public class AsrManager {
             asrService = IAsrService.Stub.asInterface(service);
             isServiceBound = true;
             if (asrCallback != null) {
-                asrCallback.onAsrStatusChanged();
+                asrCallback.OnAsrConnected();
             }
             Log.d(TAG, "ASR Service connected");
             // 连接成功后可以立即初始化模型
@@ -77,7 +77,7 @@ public class AsrManager {
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             if (asrCallback != null) {
-                asrCallback.onAsrStatusChanged();
+                asrCallback.OnAsrDisconnected();
             }
             asrService = null;
             isServiceBound = false;
@@ -126,14 +126,6 @@ public class AsrManager {
         return true;
     }
 
-    public boolean isAsrConnected() {
-        return isServiceBound;
-    }
-
-    public boolean isAsrRecognizing() {
-        return isRecognizing;
-    }
-
     public void setAsrCallback(AsrCallback callback) {
         this.asrCallback = callback;
     }
@@ -148,7 +140,7 @@ public class AsrManager {
                 asrService.reset(true);
                 isRecognizing = true;
                 if (asrCallback != null) {
-                    asrCallback.onAsrStatusChanged();
+                    asrCallback.onAsrStart();
                 }
                 Log.d(TAG, "startAsr: ");
             }
@@ -162,11 +154,11 @@ public class AsrManager {
             Log.e(TAG, "Service not bound yet");
             return;
         }
-        Log.d(TAG, "stopAsr: ");
         if (isRecognizing) {
+            Log.d(TAG, "stopAsr: ");
             isRecognizing = false;
             if (asrCallback != null) {
-                asrCallback.onAsrStatusChanged();
+                asrCallback.onAsrStop();
             }
         }
     }

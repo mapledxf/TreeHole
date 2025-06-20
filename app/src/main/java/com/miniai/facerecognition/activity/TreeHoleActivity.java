@@ -120,6 +120,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         runOnUiThread(() -> {
             updateStatus(userName);
             Toast.makeText(TreeHoleActivity.this, "Hello " + userName, Toast.LENGTH_SHORT).show();
+            ChatManager.getInstance().start();
             AsrManager.getInstance().startAsr();
         });
     }
@@ -152,8 +153,9 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
             faceStatus.setBackgroundResource(android.R.color.holo_red_dark);
             Toast.makeText(TreeHoleActivity.this, "Bye ", Toast.LENGTH_SHORT).show();
             AsrManager.getInstance().stopAsr();
-            ChatManager.getInstance().reset();
+            ChatManager.getInstance().stop();
             TtsManager.getInstance().stop();
+
         });
     }
 
@@ -163,28 +165,48 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     }
 
     @Override
-    public void onAsrStatusChanged() {
+    public void onAsrStart() {
+        Log.d(TAG, "onAsrStart: ");
         runOnUiThread(() -> {
-            if (!AsrManager.getInstance().isAsrConnected()) {
-                asrStatus.setBackgroundResource(android.R.color.darker_gray);
-            } else if (AsrManager.getInstance().isAsrRecognizing()) {
-                asrStatus.setBackgroundResource(android.R.color.holo_green_dark);
-            } else {
-                asrStatus.setBackgroundResource(android.R.color.holo_red_dark);
-            }
+            asrStatus.setBackgroundResource(android.R.color.holo_green_dark);
+            ChatManager.getInstance().addUserMessage();
         });
+    }
+
+    @Override
+    public void onAsrStop() {
+        Log.d(TAG, "onAsrStop: ");
+        runOnUiThread(() -> {
+            asrStatus.setBackgroundResource(android.R.color.holo_red_dark);
+            ChatManager.getInstance().addAIMessage();
+            ChatManager.getInstance().requestDeepSeek();
+        });
+    }
+
+    @Override
+    public void OnAsrConnected() {
+        Log.d(TAG, "OnAsrConnected: ");
+        runOnUiThread(() -> {
+            asrStatus.setBackgroundResource(android.R.color.holo_red_dark);
+        });
+    }
+
+    @Override
+    public void OnAsrDisconnected() {
+        Log.d(TAG, "OnAsrDisconnected: ");
+        runOnUiThread(() -> asrStatus.setBackgroundResource(android.R.color.darker_gray));
     }
 
     @Override
     public void onAsrFinalResult(String result) {
         Log.d(TAG, "onResult: " + result);
         AsrManager.getInstance().stopAsr();
-        runOnUiThread(() -> ChatManager.getInstance().addUserMessage(result));
     }
 
     @Override
     public void onAsrPartialResult(String partialResult) {
         Log.d(TAG, "onPartialResult: " + partialResult);
+        runOnUiThread(() -> ChatManager.getInstance().setUserMessage(partialResult));
     }
 
     @Override

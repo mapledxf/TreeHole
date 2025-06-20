@@ -19,4 +19,9 @@ public class ChatMessage {
     public StringBuilder getContent() {
         return content;
     }
+
+    public void setContent(String content) {
+        this.content.setLength(0);
+        this.content.append(content);
+    }
 }

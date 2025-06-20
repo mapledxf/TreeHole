@@ -64,9 +64,21 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyItemInserted(messages.size() - 1);
     }
 
-    // 添加流式打字机效果的消息
-    public String appendAIMessage(String content) {
+    public void setMessage(String content) {
         final int position = messages.size() - 1;
+        if (position < 0) {
+            return;
+        }
+        messages.get(position).setContent(content);
+        notifyItemChanged(position);
+    }
+
+    // 添加流式打字机效果的消息
+    public String appendMessage(String content) {
+        final int position = messages.size() - 1;
+        if (position < 0) {
+            return "";
+        }
         messages.get(position).getContent().append(content);
         notifyItemChanged(position);
         return messages.get(position).getContent().toString();

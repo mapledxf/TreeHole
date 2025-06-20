@@ -1,7 +1,10 @@
 package com.miniai.facerecognition.callback;
 
 public interface AsrCallback {
-    void onAsrStatusChanged();
+    void onAsrStart();
+    void onAsrStop();
+    void OnAsrConnected();
+    void OnAsrDisconnected();
     void onAsrFinalResult(String result);
     void onAsrPartialResult(String partialResult);
     void onAsrError(String error);

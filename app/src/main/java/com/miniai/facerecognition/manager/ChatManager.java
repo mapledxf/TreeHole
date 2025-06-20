@@ -2,8 +2,6 @@ package com.miniai.facerecognition.manager;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -28,8 +26,10 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,11 +57,12 @@ public class ChatManager {
 //    );
     Pattern pattern = Pattern.compile("<评估>\\s*(.*?)\\s*<理由>\\s*(.*)");
 
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private ChatAdapter chatAdapter;
     private final List<ChatMessage> messages = new ArrayList<>();
     private ChatCallback callback;
     private RecyclerView recyclerView;
+    private WeakReference<Activity> ref;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     private static final class Holder {
         private static final ChatManager INSTANCE = new ChatManager();
@@ -87,6 +88,7 @@ public class ChatManager {
     }
 
     public void init(Activity activity, RecyclerView chatRecyclerView) {
+        this.ref = new WeakReference<>(activity);
         this.recyclerView = chatRecyclerView;
         chatAdapter = new ChatAdapter(messages);
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
@@ -96,15 +98,37 @@ public class ChatManager {
         Log.d(TAG, "init success");
     }
 
-    public void addUserMessage(String message) {
-        Log.d(TAG, "addUserMessage: " + message);
-        chatAdapter.addMessage(new ChatMessage(ChatMessage.TYPE_USER, message));
+    public void addUserMessage() {
+        if (!isRunning.get()){
+            return;
+        }
+        chatAdapter.addMessage(new ChatMessage(ChatMessage.TYPE_USER, ""));
+        recyclerView.scrollToPosition(messages.size() - 1);
+    }
+
+    public void addAIMessage() {
+        if(!isRunning.get()){
+            return;
+        }
         chatAdapter.addMessage(new ChatMessage(ChatMessage.TYPE_DEEPSEEK, ""));
         recyclerView.scrollToPosition(messages.size() - 1);
-        try {
-            requestDeepSeek();
-        } catch (JSONException e) {
-            Log.e(TAG, "addUserMessage: ", e);
+    }
+
+    public void setUserMessage(String message) {
+        if (!isRunning.get()) {
+            return;
+        }
+        chatAdapter.setMessage(message);
+        recyclerView.scrollToPosition(messages.size() - 1);
+    }
+
+    private void appendAIMessage(String message) {
+        if (isRunning.get() && ref.get() != null) {
+            ref.get().runOnUiThread(() -> {
+                String msg = chatAdapter.appendMessage(message);
+                recyclerView.scrollToPosition(messages.size() - 1);
+                TtsManager.getInstance().play(msg);
+            });
         }
     }
 
@@ -185,69 +209,73 @@ public class ChatManager {
         return jsonBodyObject;
     }
 
-    private void requestDeepSeek() throws JSONException {
+    public void requestDeepSeek() {
         if (callback != null) {
             callback.onChatStart();
         }
 
-        String requestBody = getRequestBody();
+        try {
+            String requestBody = getRequestBody();
+            Log.d(TAG, "requestDeepSeek: " + requestBody);
+            RequestBody body = RequestBody.create(requestBody, MediaType.parse("application/json; charset=utf-8"));
 
-        Log.d(TAG, "requestDeepSeek: " + requestBody);
+            Request request = new Request.Builder()
+                    .url("https://api.deepseek.com/chat/completions")
+                    .header("Authorization", "Bearer sk-b6e4dfe5aa9c475f8209c1c9c02d5cf0")
+                    .post(body)
+                    .build();
 
-        RequestBody body = RequestBody.create(requestBody, MediaType.parse("application/json; charset=utf-8"));
+            // 异步执行
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    callback.onChatError("Network error");
+                }
 
-        Request request = new Request.Builder()
-                .url("https://api.deepseek.com/chat/completions")
-                .header("Authorization", "Bearer sk-b6e4dfe5aa9c475f8209c1c9c02d5cf0")
-                .post(body)
-                .build();
-
-        // 异步执行
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                callback.onChatError("Network error");
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response res) throws IOException {
-                if (res.isSuccessful() && res.body() != null) {
-                    ResponseBody responseBody = res.body();
-                    BufferedReader reader = new BufferedReader(responseBody.charStream());
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (line.startsWith("data: ")) {
-                            String jsonData = line.substring(6);
-                            if (jsonData.trim().equals("[DONE]")) {
-                                Log.d(TAG, "onResponse: " + messages.get(messages.size() - 1).getContent());
-                                if (callback != null) {
-                                    callback.OnChatEnd(messages);
-                                }
-                                mainHandler.post(() -> recyclerView.scrollToPosition(messages.size() - 1));
-                                break;
-                            }
-                            try {
-                                DeepSeekStreamResponse response = gson.fromJson(jsonData, DeepSeekStreamResponse.class);
-                                if (response != null &&
-                                        response.getChoices() != null &&
-                                        !response.getChoices().isEmpty() &&
-                                        response.getChoices().get(0).getDelta() != null) {
-                                    String content = response.getChoices().get(0).getDelta().getContent();
-                                    if (!TextUtils.isEmpty(content)) {
-                                        appendAIMessage(content);
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response res) throws IOException {
+                    if (res.isSuccessful() && res.body() != null) {
+                        ResponseBody responseBody = res.body();
+                        BufferedReader reader = new BufferedReader(responseBody.charStream());
+                        String line;
+                        while ((line = reader.readLine()) != null && isRunning.get()) {
+                            if (line.startsWith("data: ")) {
+                                String jsonData = line.substring(6);
+                                if (jsonData.trim().equals("[DONE]")) {
+                                    Log.d(TAG, "onResponse: " + messages.get(messages.size() - 1).getContent());
+                                    if (callback != null) {
+                                        callback.OnChatEnd(messages);
                                     }
+                                    if (ref.get() != null) {
+                                        ref.get().runOnUiThread(() -> recyclerView.scrollToPosition(messages.size() - 1));
+                                    }
+                                    break;
                                 }
-                            } catch (JsonSyntaxException e) {
-                                callback.onChatError("json pared error " + e);
+                                try {
+                                    DeepSeekStreamResponse response = gson.fromJson(jsonData, DeepSeekStreamResponse.class);
+                                    if (response != null &&
+                                            response.getChoices() != null &&
+                                            !response.getChoices().isEmpty() &&
+                                            response.getChoices().get(0).getDelta() != null) {
+                                        String content = response.getChoices().get(0).getDelta().getContent();
+                                        if (!TextUtils.isEmpty(content)) {
+                                            appendAIMessage(content);
+                                        }
+                                    }
+                                } catch (JsonSyntaxException e) {
+                                    callback.onChatError("json pared error " + e);
+                                }
                             }
                         }
+                        reader.close();
+                    } else {
+                        callback.onChatError("Request error");
                     }
-                    reader.close();
-                } else {
-                    callback.onChatError("Request error");
                 }
-            }
-        });
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "requestDeepSeek: ", e);
+        }
     }
 
     @NonNull
@@ -271,16 +299,16 @@ public class ChatManager {
         return jsonBodyObject.toString();
     }
 
-    private void appendAIMessage(String message) {
-        mainHandler.post(() -> {
-            String msg = chatAdapter.appendAIMessage(message);
-            recyclerView.scrollToPosition(messages.size() - 1);
-            TtsManager.getInstance().play(msg);
-        });
+
+    public void start() {
+        Log.d(TAG, "start: ");
+        this.isRunning.set(true);
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void reset() {
+    public void stop() {
+        Log.d(TAG, "stop: ");
+        isRunning.set(false);
         messages.clear();
         chatAdapter.notifyDataSetChanged();
     }
