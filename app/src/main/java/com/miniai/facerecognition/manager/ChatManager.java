@@ -122,7 +122,8 @@ public class ChatManager {
         recyclerView.scrollToPosition(messages.size() - 1);
     }
 
-    private void appendAIMessage(String message) {
+
+    public void appendAIMessage(String message) {
         if (isRunning.get() && ref.get() != null) {
             ref.get().runOnUiThread(() -> {
                 String msg = chatAdapter.appendMessage(message);

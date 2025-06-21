@@ -50,10 +50,10 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="20dp"
-        android:scaleType="centerInside"
+        android:scaleType="fitXY"
         android:src="@drawable/avatar"
+        app:layout_constraintDimensionRatio="H,1.5:1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.2"
         app:layout_constraintTop_toBottomOf="@id/face_status"
         app:layout_constraintWidth_percent="0.2" />
 
@@ -62,24 +62,31 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="20dp"
+        app:layout_constraintDimensionRatio="H,1.5:1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.2"
         app:layout_constraintTop_toBottomOf="@id/avatar"
         app:layout_constraintWidth_percent="0.2" />
 
-    <TextView
-        android:id="@+id/p2t"
+
+    <FrameLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_centerHorizontal="true"
-        android:background="@drawable/ptt_button_background"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:text="Push To Talk"
-        android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="H,2.5:1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.1"
-        app:layout_constraintWidth_percent="0.2" />
+        app:layout_constraintWidth_percent="0.2">
+
+        <TextView
+            android:id="@+id/p2t"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="10dp"
+            android:background="@drawable/ptt_button_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="Push To Talk"
+            android:textColor="@color/white" />
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

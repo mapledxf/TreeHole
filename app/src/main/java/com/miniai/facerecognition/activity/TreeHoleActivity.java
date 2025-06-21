@@ -10,6 +10,7 @@ import androidx.camera.view.PreviewView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -25,7 +26,6 @@ import com.miniai.facerecognition.manager.AsrManager;
 import com.miniai.facerecognition.manager.ChatManager;
 import com.miniai.facerecognition.manager.FaceManager;
 import com.miniai.facerecognition.manager.ReportManager;
-import com.miniai.facerecognition.manager.TestManager;
 import com.miniai.facerecognition.manager.TtsManager;
 import com.miniai.facerecognition.utils.permission.PermissionHelper;
 
@@ -40,6 +40,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     private View asrStatus;
 
     private Queue<String> testQueries;
+    private static final boolean CONTINUOUS_MODE = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -56,27 +57,27 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
 
         View pushToTalk = findViewById(R.id.p2t);
-//        pushToTalk.setOnTouchListener((v, event) -> {
-//            switch (event.getAction()) {
-//                case MotionEvent.ACTION_DOWN:
-//                    v.setPressed(true);
-//                    AsrManager.getInstance().startAsr();
-//                    return true;
-//                case MotionEvent.ACTION_UP:
-//                    v.setPressed(false);
-//                    AsrManager.getInstance().stopAsr();
-//                    return true;
-//            }
-//            return false;
-//        });
-        pushToTalk.setOnClickListener(v -> {
-            testQueries = TestManager.getInstance().getQueries("Danger");
-            if (!testQueries.isEmpty()) {
-                onAsrFinalResult(testQueries.remove());
+        pushToTalk.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    AsrManager.getInstance().startAsr();
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    v.setPressed(false);
+                    AsrManager.getInstance().stopAsr();
+                    return true;
             }
-
+            return false;
         });
-        pushToTalk.setVisibility(View.GONE);
+//        pushToTalk.setOnClickListener(v -> {
+//            testQueries = TestManager.getInstance().getQueries("Danger");
+//            if (!testQueries.isEmpty()) {
+//                onAsrFinalResult(testQueries.remove());
+//            }
+//        });
+        if (CONTINUOUS_MODE)
+            pushToTalk.setVisibility(View.GONE);
 
         faceStatus = findViewById(R.id.face_status);
         asrStatus = findViewById(R.id.asr_status);
@@ -121,7 +122,11 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
             updateStatus(userName);
             Toast.makeText(TreeHoleActivity.this, "Hello " + userName, Toast.LENGTH_SHORT).show();
             ChatManager.getInstance().start();
-            AsrManager.getInstance().startAsr();
+            ChatManager.getInstance().addAIMessage();
+            ChatManager.getInstance().appendAIMessage(
+                    "你好，亲爱的"
+                            + (UserInfo.DEFAULT_NAME.equals(userName) ? "神秘小朋友" : userName)
+                            + ", 今天想跟我聊些什么？");
         });
     }
 
@@ -237,7 +242,9 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
 
     @Override
     public void onTtsFinish() {
-        AsrManager.getInstance().startAsr();
+        if (CONTINUOUS_MODE) {
+            AsrManager.getInstance().startAsr();
+        }
         if (testQueries != null && !testQueries.isEmpty()) {
             onAsrFinalResult(testQueries.remove());
         }
