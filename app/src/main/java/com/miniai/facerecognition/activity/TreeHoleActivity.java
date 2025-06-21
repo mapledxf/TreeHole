@@ -76,7 +76,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
             }
 
         });
-//        pushToTalk.setVisibility(View.GONE);
+        pushToTalk.setVisibility(View.GONE);
 
         faceStatus = findViewById(R.id.face_status);
         asrStatus = findViewById(R.id.asr_status);

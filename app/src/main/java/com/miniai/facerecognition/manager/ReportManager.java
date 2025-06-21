@@ -62,7 +62,9 @@ public class ReportManager {
             new Thread(() -> {
                 try {
                     Pair<String,String> evaluation = ChatManager.getInstance().evaluate(messagesArray.toString());
-
+                    if ("无".equals(evaluation.first)) {
+                        return;
+                    }
                     JSONObject json = new JSONObject();
                     json.put("time", System.currentTimeMillis() / 1000);
                     json.put("username", userName);

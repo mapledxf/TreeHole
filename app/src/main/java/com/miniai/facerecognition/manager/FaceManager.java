@@ -172,7 +172,7 @@ public class FaceManager {
                     handler.postDelayed(() -> {
                         Log.d(TAG, "from " + state + " to " + STATE.IDLE);
                         state = STATE.IDLE;
-                        callback.OnFaceSessionEnd(currentUser.userName);
+                        callback.OnFaceSessionEnd(currentUser == null ? "" : currentUser.userName);
                         currentUser = null;
                     }, 5000);
 //                                } else if (state == STATE.QUITING) {
