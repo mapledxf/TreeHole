@@ -174,7 +174,7 @@ public class FaceManager {
                         state = STATE.IDLE;
                         callback.OnFaceSessionEnd(currentUser == null ? "" : currentUser.userName);
                         currentUser = null;
-                    }, 5000);
+                    }, 2000);
 //                                } else if (state == STATE.QUITING) {
                 }
                 break;

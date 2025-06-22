@@ -59,29 +59,37 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return messages.size();
     }
 
-    public void addMessage(ChatMessage message) {
+    public void addMessage( ChatMessage message) {
         messages.add(message);
         notifyItemInserted(messages.size() - 1);
     }
 
-    public void setMessage(String content) {
+    public void setMessage(int type, String content) {
         final int position = messages.size() - 1;
         if (position < 0) {
             return;
         }
-        messages.get(position).setContent(content);
-        notifyItemChanged(position);
+        ChatMessage chatMessage = messages.get(position);
+        if(chatMessage.getType() == type) {
+            chatMessage.setContent(content);
+            notifyItemChanged(position);
+        }
     }
 
     // 添加流式打字机效果的消息
-    public String appendMessage(String content) {
+    public String appendMessage(int type, String content) {
         final int position = messages.size() - 1;
         if (position < 0) {
             return "";
         }
-        messages.get(position).getContent().append(content);
-        notifyItemChanged(position);
-        return messages.get(position).getContent().toString();
+        ChatMessage chatMessage = messages.get(position);
+        if(chatMessage.getType() == type) {
+            chatMessage.getContent().append(content);
+            notifyItemChanged(position);
+            return messages.get(position).getContent().toString();
+        } else {
+            return "";
+        }
     }
 
     // ViewHolder 类

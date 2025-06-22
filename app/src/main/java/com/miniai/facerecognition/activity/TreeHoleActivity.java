@@ -38,7 +38,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     private PreviewView previewView;
     private View faceStatus;
     private View asrStatus;
-
+    private View pushToTalk;
     private Queue<String> testQueries;
     private static final boolean CONTINUOUS_MODE = false;
 
@@ -56,7 +56,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         });
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
 
-        View pushToTalk = findViewById(R.id.p2t);
+        pushToTalk = findViewById(R.id.p2t);
         pushToTalk.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -238,6 +238,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
     @Override
     public void onTtsStart() {
         AsrManager.getInstance().stopAsr();
+        runOnUiThread(() -> pushToTalk.setEnabled(false));
     }
 
     @Override
@@ -245,6 +246,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         if (CONTINUOUS_MODE) {
             AsrManager.getInstance().startAsr();
         }
+        runOnUiThread(() -> pushToTalk.setEnabled(true));
         if (testQueries != null && !testQueries.isEmpty()) {
             onAsrFinalResult(testQueries.remove());
         }

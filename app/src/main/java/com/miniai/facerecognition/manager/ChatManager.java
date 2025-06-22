@@ -99,7 +99,7 @@ public class ChatManager {
     }
 
     public void addUserMessage() {
-        if (!isRunning.get()){
+        if (!isRunning.get()) {
             return;
         }
         chatAdapter.addMessage(new ChatMessage(ChatMessage.TYPE_USER, ""));
@@ -107,7 +107,7 @@ public class ChatManager {
     }
 
     public void addAIMessage() {
-        if(!isRunning.get()){
+        if (!isRunning.get()) {
             return;
         }
         chatAdapter.addMessage(new ChatMessage(ChatMessage.TYPE_DEEPSEEK, ""));
@@ -118,7 +118,7 @@ public class ChatManager {
         if (!isRunning.get()) {
             return;
         }
-        chatAdapter.setMessage(message);
+        chatAdapter.setMessage(ChatMessage.TYPE_USER, message);
         recyclerView.scrollToPosition(messages.size() - 1);
     }
 
@@ -126,7 +126,7 @@ public class ChatManager {
     public void appendAIMessage(String message) {
         if (isRunning.get() && ref.get() != null) {
             ref.get().runOnUiThread(() -> {
-                String msg = chatAdapter.appendMessage(message);
+                String msg = chatAdapter.appendMessage(ChatMessage.TYPE_DEEPSEEK, message);
                 recyclerView.scrollToPosition(messages.size() - 1);
                 TtsManager.getInstance().play(msg);
             });
