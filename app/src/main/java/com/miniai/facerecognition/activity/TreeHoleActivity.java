@@ -57,6 +57,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         RecyclerView chatRecyclerView = findViewById(R.id.chat_recycler_view);
 
         pushToTalk = findViewById(R.id.p2t);
+        pushToTalk.setEnabled(false);
         pushToTalk.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -160,6 +161,7 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
             AsrManager.getInstance().stopAsr();
             ChatManager.getInstance().stop();
             TtsManager.getInstance().stop();
+            pushToTalk.setEnabled(false);
 
         });
     }
