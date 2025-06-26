@@ -23,7 +23,7 @@ import okhttp3.Response;
 
 public class ReportManager {
     private static final String TAG = "[TreeHole]ReportManager";
-    private static final String URL = "http://192.168.2.201:5050/report";
+    private static final String URL = "http://treehole.gleap.cc/report";
     private final OkHttpClient client = new OkHttpClient();
 
     private static final class Holder {
