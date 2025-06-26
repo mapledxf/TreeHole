@@ -72,7 +72,9 @@ class DeepSeekChat:
 
 # 使用示例
 if __name__ == "__main__":
-    API_KEY = "sk-b6e4dfe5aa9c475f8209c1c9c02d5cf0"
+    API_KEY = ""
+    with open("./app/src/main/assets/evaluation_prompt.txt", 'r', encoding='utf-8') as file:
+        API_KEY = file.read.strip()
     prompt = ""
     with open("./app/src/main/assets/evaluation_prompt.txt", 'r', encoding='utf-8') as file:
         prompt = file.read().strip()

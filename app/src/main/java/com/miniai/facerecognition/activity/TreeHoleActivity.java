@@ -90,12 +90,12 @@ public class TreeHoleActivity extends AppCompatActivity implements FaceCallback,
         });
         permissionHelper.checkPermissions(getApplicationContext(), Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.INTERNET);
 
-        ChatManager.getInstance().init(this, chatRecyclerView);
-
-        FaceManager.getInstance().setFaceCallback(this);
-        ChatManager.getInstance().setChatCallback(this);
-        AsrManager.getInstance().setAsrCallback(this);
-        TtsManager.getInstance().setTtsCallback(this);
+        if(ChatManager.getInstance().init(this, chatRecyclerView)) {
+            FaceManager.getInstance().setFaceCallback(this);
+            ChatManager.getInstance().setChatCallback(this);
+            AsrManager.getInstance().setAsrCallback(this);
+            TtsManager.getInstance().setTtsCallback(this);
+        }
     }
 
     @Override

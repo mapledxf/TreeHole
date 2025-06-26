@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -50,6 +51,7 @@ public class ChatManager {
     private final OkHttpClient client = new OkHttpClient();
     private final Gson gson = new Gson();
 
+    private String apiKey = "";
     // 定义正则表达式模式
 //    private final Pattern pattern = Pattern.compile(
 //            "<评估>\\s*(.*?)\\s*<理由>\\s*(.*?)",
@@ -87,7 +89,7 @@ public class ChatManager {
         this.callback = callback;
     }
 
-    public void init(Activity activity, RecyclerView chatRecyclerView) {
+    public boolean init(Activity activity, RecyclerView chatRecyclerView) {
         this.ref = new WeakReference<>(activity);
         this.recyclerView = chatRecyclerView;
         chatAdapter = new ChatAdapter(messages);
@@ -95,7 +97,14 @@ public class ChatManager {
         chatRecyclerView.setAdapter(chatAdapter);
         chatPrompt = Utils.readFileFromAssets(App.getInstance(), "chat_prompt.txt");
         evaluationPrompt = Utils.readFileFromAssets(App.getInstance(), "evaluation_prompt.txt");
+        apiKey = Utils.readFileFromAssets(App.getInstance(), "api_key.txt").trim();
+        if (TextUtils.isEmpty(apiKey)) {
+            Toast.makeText(activity, "请将您的DeepSeek API KEY写在assets目录里的api_key.txt中", Toast.LENGTH_LONG).show();
+            Log.e(TAG, "init: api key is empty");
+            return false;
+        }
         Log.d(TAG, "init success");
+        return true;
     }
 
     public void addUserMessage() {
@@ -144,7 +153,7 @@ public class ChatManager {
 
             Request request = new Request.Builder()
                     .url("https://api.deepseek.com/chat/completions")
-                    .header("Authorization", "Bearer sk-b6e4dfe5aa9c475f8209c1c9c02d5cf0")
+                    .header("Authorization", "Bearer " + apiKey)
                     .post(body)
                     .build();
             try (Response res = client.newCall(request).execute()) {
@@ -222,7 +231,7 @@ public class ChatManager {
 
             Request request = new Request.Builder()
                     .url("https://api.deepseek.com/chat/completions")
-                    .header("Authorization", "Bearer sk-b6e4dfe5aa9c475f8209c1c9c02d5cf0")
+                    .header("Authorization", "Bearer " + apiKey)
                     .post(body)
                     .build();
 
